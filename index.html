@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#152036">
+<meta name="theme-color" content="#F6F5F0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Halka Planlayıcı</title>
+<title>Halka · Sade</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
@@ -325,6 +325,16 @@ textarea.inp{min-height:64px;resize:vertical}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
 .pulse{animation:pulse 1.6s infinite}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Halka Sade: presentation layer; existing data model retained. */
+:root{--bg:#F6F5F0;--surface:#FFFEFA;--surface2:#EEEEE6;--ink:#283B34;--muted:#777D73;--line:#E3E5DB;--gold:#B39559;--gold-ink:#816B3D;--gold-soft:#F2EAD7;--teal:#527D67;--teal-soft:#E9F0E8;--q1:#BA6256;--q2:#64818D;--q3:#B39559;--q4:#8C9389;--r:22px;--shadow:0 6px 24px #283b3407;--f-display:"Figtree",system-ui,sans-serif}
+:root[data-theme="dark"]{--bg:#171E1A;--surface:#202B24;--surface2:#29372D;--ink:#E5E9DF;--muted:#A4B0A0;--line:#354438;--teal:#94B59C;--teal-soft:#2A3D30;--gold:#C8AB73;--gold-soft:#3C3526}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171E1A;--surface:#202B24;--surface2:#29372D;--ink:#E5E9DF;--muted:#A4B0A0;--line:#354438;--teal:#94B59C;--teal-soft:#2A3D30;--gold:#C8AB73;--gold-soft:#3C3526}}
+body{letter-spacing:-.015em}main{max-width:980px;padding-top:28px}.head{margin:18px 0 24px}.head h1{font-size:34px;font-weight:600;letter-spacing:-.055em}.sub{line-height:1.6}.brand{font-size:27px;letter-spacing:-.055em;padding-bottom:32px}.navbtn{padding:13px 16px;border-radius:15px;font-weight:500}.navbtn[aria-current="true"]{background:var(--teal-soft);color:var(--teal)}.side{background:var(--bg);padding:32px 20px;border-right:1px solid var(--line)}.card,.summary,.pcard{box-shadow:var(--shadow);border-radius:22px}.summary{padding:24px;background:linear-gradient(120deg,var(--teal-soft),var(--surface));border:0}.summary .big{font-size:27px;font-weight:500}.summary svg{width:74px;height:74px}.sec{margin-top:26px}.sec h2{font-size:12px;letter-spacing:.08em}.list{gap:9px}.trow,.row,.prow{padding:16px;border-radius:16px;border-left-width:3px}.trow .t,.row .t,.prow .t{font-weight:500}.check{border-radius:50%;transition:background .2s,transform .2s}.check:active{transform:scale(.85)}.check.on{animation:sade-check .35s ease-out}.btn,.chip,.iconbtn{border-radius:12px}.btn.pri{background:var(--ink);color:var(--surface)}.fab{background:var(--ink);color:var(--surface);border-radius:23px;box-shadow:0 8px 24px #283b3428;transition:transform .2s}.fab:hover{transform:translateY(-3px)}.clocks{gap:0;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px 4px}.clock{border:0;background:none;border-right:1px solid var(--line);border-radius:0;padding:3px 12px}.clock:last-child{border-right:0}.clock .v{font-size:16px;font-weight:500}.clock .bar{height:2px}.clock .k{font-size:10px}.banner{border-radius:16px;font-size:13px;box-shadow:none}.chain .lk{stroke-linecap:round;filter:drop-shadow(0 2px 2px #b395591b)}.dhandle{width:5px;height:84px;top:43%;background:var(--teal);opacity:.6;border-radius:5px 0 0 5px}.drawer{box-shadow:-20px 0 80px #283b3418}.quick{background:var(--bg);align-items:center}.qbox{gap:24px;max-width:520px;padding-bottom:12vh}.qtitle{font-size:15px;font-weight:500;color:var(--muted)}.qtop:before{content:'◌';font-size:32px;color:var(--teal)}.qinp{border:0;border-bottom:1px solid var(--line);background:transparent;border-radius:0;padding:12px 0;font-size:34px;letter-spacing:-.045em;min-height:160px}.qinp:focus{border-color:var(--teal)}.qinp::placeholder{color:var(--muted);opacity:.7}.qsend{border-radius:18px;padding:19px}.qbox:after{content:'Aklında tutma. Halka’ya bırak.';text-align:center;color:var(--muted);font-size:13px}.sheet{border-radius:26px 26px 0 0}.tabbar{grid-template-columns:repeat(4,1fr);background:var(--surface);padding-top:12px;box-shadow:0 -4px 24px #283b3405}.tabbar button{font-weight:500;gap:5px}.tabbar button[aria-current="true"] svg{color:var(--teal)}.tabbar button[aria-current="true"]{color:var(--teal)}#view{animation:sade-enter .25s ease-out}.more-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.more-grid .navbtn{background:var(--surface);border:1px solid var(--line);min-height:84px}.auth .box{background:var(--surface);padding:28px;border:1px solid var(--line);border-radius:26px}
+@keyframes sade-enter{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}@keyframes sade-check{50%{transform:scale(1.15)}}
+@media(min-width:900px){#app{grid-template-columns:245px 1fr}main{padding:38px 48px 72px}.sheet{border-radius:26px}.dhandle{width:6px}}
+@media(max-width:600px){main{padding:18px 20px 125px}.head h1{font-size:30px}.clocks{padding:10px 0}.clock{padding:3px 8px}.clock .v{font-size:12px}.clock .s{font-size:10px}.summary{padding:20px}.summary .big{font-size:23px}.qbox{padding:0 8px 15vh}.qinp{font-size:30px}.qsend{padding:17px}.fab{bottom:100px!important;width:54px;height:54px}.banner{flex-wrap:wrap}}
+
 </style>
 </head>
 <body>
@@ -723,12 +733,16 @@ const TABS=[['today','Bugün',IC.today],['all','Görevler',IC.list],['plan','Pla
 function render(){
   VERSION++;
   const storeTxt=storeText();
-  $('#side').innerHTML=`<div class="brand">${brandSvg()}Halka</div>`+TABS.map(([k,l,i])=>`<button class="navbtn" data-tab="${k}" aria-current="${UI.tab===k}">${i}${l}</button>`).join('')+`<button class="navbtn" data-act="openDrawer">${IC.note}Aklımdakiler</button><div class="store">${storeTxt}</div>`;
-  $('#tabbar').innerHTML=TABS.map(([k,l,i])=>`<button data-tab="${k}" aria-current="${UI.tab===k}">${i}<span>${l}</span></button>`).join('');
-  const v={today:viewToday,all:viewAll,projects:viewProjects,matrix:viewMatrix,plan:viewPlan,routines:viewRoutines,matrix:viewMatrix,settings:viewSettings}[UI.tab]||viewToday;
+  $('#side').innerHTML=`<div class="brand">${brandSvg()}Halka</div>`+visibleTabs().map(([k,l,i])=>`<button class="navbtn" data-tab="${k}" aria-current="${UI.tab===k}">${i}${l}</button>`).join('')+`<button class="navbtn" data-tab="more">${IC.gear}Diğer</button><button class="navbtn" data-act="openDrawer">${IC.note}Aklımdakiler</button><div class="store">${storeTxt}</div>`;
+  $('#tabbar').innerHTML=[...visibleTabs().filter(t=>['today','all','plan'].includes(t[0])),['more','Diğer',IC.gear]].map(([k,l,i])=>`<button data-tab="${k}" aria-current="${UI.tab===k}">${i}<span>${l}</span></button>`).join('');
+  const v={more:viewMore,today:viewToday,all:viewAll,projects:viewProjects,matrix:viewMatrix,plan:viewPlan,routines:viewRoutines,matrix:viewMatrix,settings:viewSettings}[UI.tab]||viewToday;
   $('#view').innerHTML=v();
   renderClocks();
 }
+function visibleTabs(){const hidden=ls.get('halka-hidden-tabs',[]);return TABS.filter(t=>!hidden.includes(t[0]))}
+function viewMore(){return `<div class="head"><div><h1>Diğer</h1><p class="sub">İhtiyacın olduğunda, burada.</p></div></div><div class="more-grid">${TABS.filter(t=>!['today','all','plan'].includes(t[0])||ls.get('halka-hidden-tabs',[]).includes(t[0])).map(([k,l,i])=>`<button class="navbtn" data-tab="${k}">${i}${l}</button>`).join('')}<button class="navbtn" data-act="openDrawer">${IC.note}Aklımdakiler</button></div>`}
+function sadePreferences(){return `<div class="card" style="margin-bottom:16px"><h3>Ekranını sadeleştir</h3><p class="small muted">Gizlediklerin Diğer menüsünde durur.</p>${TABS.filter(t=>!['today','settings'].includes(t[0])).map(([k,l])=>`<label class="toggle"><input type="checkbox" data-sade-hide="${k}" ${ls.get('halka-hidden-tabs',[]).includes(k)?'checked':''}><span>${l} bölümünü gizle</span></label>`).join('')}</div>`}
+document.addEventListener('change',e=>{const k=e.target.dataset.sadeHide;if(!k)return;const h=new Set(ls.get('halka-hidden-tabs',[]));if(e.target.checked)h.add(k);else h.delete(k);ls.set('halka-hidden-tabs',[...h]);render()});
 function brandSvg(){return `<svg viewBox="0 0 40 40"><rect x="3" y="12" width="20" height="16" rx="8" fill="none" stroke="var(--gold)" stroke-width="4.5"/><rect x="17" y="12" width="20" height="16" rx="8" fill="none" stroke="var(--ink)" stroke-width="4.5"/></svg>`}
 
 /* ============ rows ============ */
@@ -992,7 +1006,7 @@ const SYNC_CATS=[['tasks','Görevler','başlık, tarih, öncelik, durum'],['rout
 function viewSettings(){
   const st=S.settings,sy=st.sync;
   const notif=('Notification' in window)?Notification.permission:'yok';
-  return `<div class="head"><h1>Ayarlar</h1></div>
+  return `<div class="head"><h1>Ayarlar</h1></div>${sadePreferences()}
   <div class="card">
     <h3>Diğer uygulamayla senkronizasyon</h3>
     <p class="small muted" style="margin:0">Hangi verilerin ikinci uygulamaya (5 yıllık hedef haritan) gideceğini seç. Seçtiklerin bir senkron kutusuna yazılır; ikinci uygulama hazır olduğunda buradan okuyacak.</p>
@@ -1070,8 +1084,8 @@ function openQuick(){
   const el=$('#quick');el.hidden=false;
   el.innerHTML=`<form class="qbox" id="qa-form">
     <div class="qtop"><span class="qtitle">Hızlı görev</span><span class="qcount" id="qa-count"></span><button type="button" class="iconbtn" data-act="qaClose" aria-label="Kapat">${IC.x}</button></div>
-    <textarea class="qinp" id="qa-title" rows="3" placeholder="Ne yapılacak?" autocomplete="off" enterkeyhint="send"></textarea>
-    <button class="btn pri qsend" type="submit">Gönder</button>
+    <textarea class="qinp" id="qa-title" rows="3" placeholder="Aklında ne var?" autocomplete="off" enterkeyhint="send"></textarea>
+    <button class="btn pri qsend" type="submit">Ekle →</button>
     <div class="qdone" id="qa-done" hidden>${IC.ok}<span>Eklendi</span></div>
   </form>`;
   const i=$('#qa-title');setTimeout(()=>i.focus(),50);
