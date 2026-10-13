@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#152036">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Halka">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Halka Planlayıcı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: sidebar on wide screens, bottom tab bar on phones; one working column; chains are the one bold gold element */
+:root{
+  --bg:#EDF1F7; --surface:#FFFFFF; --surface2:#F5F7FB; --ink:#152036; --muted:#5B6880; --line:#DAE1EC;
+  --gold:#C98A06; --gold-ink:#7A5200; --gold-soft:#FCEBC2; --teal:#0F7F78; --teal-soft:#D6F1EE;
+  --q1:#CF3F35; --q2:#2B67CF; --q3:#B97D0B; --q4:#7E889A; --danger:#C2362C;
+  --shadow:0 1px 2px rgba(21,32,54,.06),0 8px 24px rgba(21,32,54,.07);
+  --f-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --f-body:"Figtree","Segoe UI",system-ui,-apple-system,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D121D; --surface:#151C2B; --surface2:#1B2435; --ink:#E7ECF5; --muted:#98A3B9; --line:#273147;
+  --gold:#F0B23A; --gold-ink:#F7CF7A; --gold-soft:#3A2D10; --teal:#3CC0B4; --teal-soft:#123532;
+  --q1:#F0695E; --q2:#6E9DF2; --q3:#E5AE3E; --q4:#7F899C; --danger:#F0695E;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D121D; --surface:#151C2B; --surface2:#1B2435; --ink:#E7ECF5; --muted:#98A3B9; --line:#273147;
+  --gold:#F0B23A; --gold-ink:#F7CF7A; --gold-soft:#3A2D10; --teal:#3CC0B4; --teal-soft:#123532;
+  --q1:#F0695E; --q2:#6E9DF2; --q3:#E5AE3E; --q4:#7F899C; --danger:#F0695E;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); color-scheme:dark}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+.auth{position:fixed;inset:0;background:var(--bg);z-index:80;display:grid;place-items:center;padding:24px 16px;overflow:auto}
+.auth .box{width:100%;max-width:400px;display:flex;flex-direction:column;gap:12px}
+.auth .err{color:var(--danger);font-weight:600;font-size:14px}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--q2);outline-offset:2px;border-radius:8px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+#app{display:grid;grid-template-columns:1fr;min-height:100%}
+.side{display:none}
+main{padding:12px 16px 110px;max-width:880px;width:100%;margin:0 auto;min-width:0}
+@media (min-width:900px){
+  #app{grid-template-columns:232px 1fr}
+  .side{display:flex;flex-direction:column;gap:6px;padding:22px 14px;border-right:1px solid var(--line);position:sticky;top:0;height:100vh;background:var(--surface)}
+  .tabbar{display:none!important}
+  main{padding:22px 32px 60px}
+  .fab{bottom:28px!important;right:32px!important}
+}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:800;font-size:20px;padding:4px 8px 16px}
+.brand svg{width:30px;height:30px}
+.navbtn{display:flex;align-items:center;gap:10px;padding:10px 12px;border:0;background:none;border-radius:10px;text-align:left;font-weight:600;color:var(--muted)}
+.navbtn svg{width:20px;height:20px;flex:none}
+.navbtn[aria-current="true"]{background:var(--surface2);color:var(--ink)}
+.navbtn:hover{color:var(--ink)}
+.store{margin-top:auto;font-size:12px;color:var(--muted);padding:8px 10px;border-radius:10px;background:var(--surface2)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:6px;vertical-align:middle}
+.dot.on{background:var(--teal)}
+
+.tabbar{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));z-index:20}
+.tabbar button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--muted);padding:4px 0}
+.tabbar svg{width:22px;height:22px}
+.tabbar button[aria-current="true"]{color:var(--ink)}
+.tabbar button[aria-current="true"] svg{color:var(--gold)}
+.fab{position:fixed;right:18px;bottom:calc(78px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:20px;border:0;background:var(--ink);color:var(--bg);box-shadow:var(--shadow);display:grid;place-items:center;z-index:21;transition:transform .15s}
+.fab:active{transform:scale(.94)}
+.fab svg{width:26px;height:26px}
+
+/* clocks */
+.clocks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.clock{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px;text-align:left;min-width:0}
+.clock .k{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.clock .v{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clock .s{font-size:11.5px;color:var(--teal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clock .bar{height:3px;border-radius:2px;background:var(--surface2);margin-top:6px;overflow:hidden}
+.clock .bar i{display:block;height:100%;background:var(--gold)}
+@media (max-width:420px){.clock .v{font-size:12.5px;letter-spacing:-.02em}.clock{padding:7px 7px}.clocks{gap:6px}}
+
+/* headings & sections */
+.head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 12px}
+.head h1{font-size:26px;flex:1;min-width:0}
+.sub{color:var(--muted);font-size:13.5px}
+.iconbtn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center}
+.iconbtn svg{width:18px;height:18px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.seg{display:inline-flex;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:2px}
+.seg button{border:0;background:none;padding:7px 14px;border-radius:9px;font-weight:600;font-size:13.5px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.sec{margin:18px 0 8px;display:flex;align-items:baseline;gap:8px}
+.sec h2{font-size:13px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-family:var(--f-body);font-weight:700}
+.sec .add{margin-left:auto;border:0;background:none;color:var(--q2);font-weight:600;font-size:13.5px}
+.list{display:flex;flex-direction:column;gap:6px}
+.empty{color:var(--muted);font-size:14px;padding:12px 14px;border:1px dashed var(--line);border-radius:12px}
+
+/* rows */
+.row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.row .body{flex:1;min-width:0;cursor:pointer}
+.row .t{font-weight:600;overflow-wrap:anywhere}
+.row .m{font-size:12.5px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row.done .t{text-decoration:line-through;color:var(--muted)}
+.check{width:28px;height:28px;flex:none;border-radius:50%;border:2.5px solid var(--qc,var(--q4));background:transparent;display:grid;place-items:center;transition:transform .15s,background .2s}
+.check svg{width:16px;height:16px;opacity:0;color:#fff}
+.check.on{background:var(--qc,var(--q4))}
+.check.on svg{opacity:1}
+.check:active{transform:scale(.88)}
+.qtag{font-size:11px;font-weight:700;padding:1px 7px;border-radius:6px;color:var(--qc);background:color-mix(in srgb,var(--qc) 13%,transparent)}
+.timecol{font-family:var(--f-mono);font-size:13px;font-weight:600;width:48px;flex:none;color:var(--muted)}
+.nowline{display:flex;align-items:center;gap:8px;color:var(--danger);font-size:12px;font-weight:700;font-family:var(--f-mono)}
+.nowline::after{content:"";flex:1;height:2px;background:var(--danger);border-radius:2px}
+
+/* routine ring button */
+.rbtn{width:44px;height:44px;flex:none;border:0;background:none;padding:0;position:relative}
+.rbtn svg{width:44px;height:44px}
+.rbtn .n{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;font-weight:700;font-family:var(--f-mono)}
+.link{display:inline-flex;align-items:center;gap:3px;color:var(--gold-ink);font-weight:700}
+.link svg{width:14px;height:14px}
+.rrow{border-left:4px solid var(--rc)}
+
+/* banners */
+.banner{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:var(--gold-soft);color:var(--gold-ink);margin-bottom:8px;border:0;width:100%;text-align:left;font-weight:600}
+.banner.blue{background:color-mix(in srgb,var(--q2) 14%,var(--surface));color:var(--ink)}
+.banner svg{width:20px;height:20px;flex:none}
+.banner span{flex:1}
+
+/* summary */
+.summary{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:6px}
+.summary svg{width:64px;height:64px;flex:none}
+.summary .big{font-family:var(--f-display);font-size:22px;font-weight:700}
+
+/* routine cards */
+.rcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.rcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.rcard .top{display:flex;gap:10px;align-items:flex-start}
+.rcard .nm{font-family:var(--f-display);font-weight:700;font-size:18px;overflow-wrap:anywhere}
+.streak{display:flex;align-items:baseline;gap:6px}
+.streak b{font-family:var(--f-display);font-size:34px;line-height:1;color:var(--gold-ink)}
+.chain{width:100%;height:34px;display:block}
+.chain .lk{fill:none;stroke-width:4}
+.paused{opacity:.55}
+
+/* matrix */
+.matrix{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:640px){.matrix{grid-template-columns:1fr}}
+.quad{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--qc);border-radius:var(--r);padding:12px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.quad h3{font-size:16px}
+.quad .hint{font-size:12.5px;color:var(--muted)}
+.quad .row{background:var(--surface2)}
+
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal .wd{font-size:11px;text-align:center;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.cell{aspect-ratio:1/1;max-width:100%;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:5px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
+.cell.out{opacity:.4}
+.cell.today{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.cell.sel{background:var(--ink);color:var(--bg)}
+.cell .d{font-weight:700;font-size:13px}
+.cell .dots{display:flex;gap:2px;flex-wrap:wrap}
+.cell .dots i{width:6px;height:6px;border-radius:50%}
+.cell .c{font-size:10px;color:var(--muted);margin-top:auto}
+.cell.sel .c{color:inherit}
+.months{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.mcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:left}
+.mcard b{font-family:var(--f-display);font-size:17px;display:block}
+.mcard .bar{height:4px;background:var(--surface2);border-radius:2px;margin-top:8px;overflow:hidden}
+.mcard .bar i{display:block;height:100%;background:var(--teal)}
+.mcard.cur{border-color:var(--gold)}
+.dayblock{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.dayblock .dh{display:flex;align-items:center;gap:8px;border:0;background:none;padding:0;width:100%;text-align:left;font-weight:700;margin-bottom:6px}
+.dayblock .dh .sub{font-weight:500;margin-left:auto}
+.dayblock.today{border-color:var(--gold)}
+.mini{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:14px;min-width:0}
+.mini .t{flex:1;min-width:0;overflow-wrap:anywhere;cursor:pointer}
+.mini .check{width:22px;height:22px;border-width:2px}
+.mini .check svg{width:12px;height:12px}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(10,14,22,.45);z-index:40;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
+.sheet{background:var(--surface);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));animation:up .2s ease-out;display:flex;flex-direction:column;gap:14px}
+@media (min-width:700px){.scrim{align-items:center}.sheet{border-radius:20px;padding:22px}}
+.sheet h2{font-size:21px}
+.sheet .x{margin-left:auto}
+.shead{display:flex;align-items:center;gap:8px}
+@keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.inp{width:100%;border:1px solid var(--line);background:var(--surface2);border-radius:11px;padding:11px 12px;font-size:16px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--ink)}
+.inp.big{font-size:20px;padding:14px}
+textarea.inp{min-height:64px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qpick{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.qpick button{border:2px solid var(--line);background:var(--surface2);border-radius:11px;padding:9px 10px;text-align:left;font-size:13px;font-weight:700;color:var(--ink)}
+.qpick button small{display:block;font-weight:500;color:var(--muted)}
+.qpick button[aria-pressed="true"]{border-color:var(--qc);background:color-mix(in srgb,var(--qc) 12%,var(--surface))}
+.toggle{display:flex;align-items:center;gap:10px;font-size:14.5px;font-weight:600;cursor:pointer}
+.toggle input{width:20px;height:20px;accent-color:var(--teal)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:0;border-radius:12px;padding:12px 16px;font-weight:700;background:var(--surface2);border:1px solid var(--line)}
+.btn.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.gold{background:var(--gold);color:#1d1400;border-color:var(--gold)}
+.btn.danger{color:var(--danger)}
+.btn.grow{flex:1}
+.typegrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.typegrid button{border:2px solid var(--line);background:var(--surface2);border-radius:11px;padding:9px;text-align:left;font-size:13.5px;font-weight:600}
+.typegrid button small{display:block;color:var(--muted);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em}
+.typegrid button[aria-pressed="true"]{border-color:var(--gold);background:var(--gold-soft)}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.swatches button{width:30px;height:30px;border-radius:50%;border:3px solid transparent;background:var(--c)}
+.swatches button[aria-pressed="true"]{border-color:var(--ink)}
+.wdpick{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.wdpick button{border:1px solid var(--line);background:var(--surface2);border-radius:9px;padding:8px 0;font-size:12.5px;font-weight:700}
+.wdpick button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.mdpick{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.mdpick button{border:1px solid var(--line);background:var(--surface2);border-radius:8px;padding:6px 0;font-size:12.5px;font-family:var(--f-mono)}
+.mdpick button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.pend{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2)}
+.pend .btns .btn{padding:8px 12px;font-size:13px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+.card h3{font-size:18px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.taglist{display:flex;gap:6px;flex-wrap:wrap}
+.code{font-family:var(--f-mono);font-size:12px;width:100%;min-height:90px}
+
+#toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;z-index:60;width:min(92vw,420px);pointer-events:none}
+.toast{background:var(--ink);color:var(--bg);padding:11px 14px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:var(--shadow);animation:up .2s;pointer-events:auto;display:flex;gap:10px;align-items:center}
+.toast button{margin-left:auto;background:none;border:1px solid currentColor;color:inherit;border-radius:8px;padding:3px 9px;font-weight:700}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:70;width:100%;height:100%}
+@keyframes clink{0%{transform:scale(1)}40%{transform:scale(1.25) rotate(-8deg)}100%{transform:scale(1)}}
+.clink{animation:clink .45s ease-out}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.pulse{animation:pulse 1.6s infinite}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <aside class="side" id="side"></aside>
+  <main>
+    <div class="clocks" id="clocks" aria-label="Geri sayım sayaçları"></div>
+    <div id="view"></div>
+  </main>
+  <nav class="tabbar" id="tabbar"></nav>
+  <button class="fab" id="fab" aria-label="Hızlı görev ekle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+</div>
+<div id="sheets"></div>
+<div id="toasts"></div>
+<canvas id="fx"></canvas>
+
+<div class="auth" id="auth" hidden></div>
+<script src="supabase.js"></script>
+<script>
+/* ============ utilities ============ */
+const pad=n=>String(n).padStart(2,'0');
+const dk=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const pd=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,(m||1)-1,d||1)};
+const addD=(d,n)=>{const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()+n);return x};
+const wdi=d=>(d.getDay()+6)%7;
+const monday=d=>addD(d,-wdi(d));
+const today=()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())};
+const daysIn=(y,m)=>new Date(y,m+1,0).getDate();
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=s=>document.querySelector(s);
+const DAYS=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+const DAYS_L=['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
+const MON=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+const fmtDay=d=>`${d.getDate()} ${MON[d.getMonth()]}`;
+const fmtMD=s=>{const[m,d]=s.split('-').map(Number);return `${d} ${MON[m-1]}`};
+const toMin=t=>{if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m};
+const fmtDur=m=>{m=Math.round(m);if(m<60)return m+' dk';const h=Math.floor(m/60),r=m%60;return r?`${h} sa ${r} dk`:`${h} sa`};
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const IC={
+ today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle cx="12" cy="15" r="1.6" fill="currentColor"/></svg>',
+ plan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.8"/><rect x="14" y="3" width="7" height="7" rx="1.8"/><rect x="3" y="14" width="7" height="7" rx="1.8"/><rect x="14" y="14" width="7" height="7" rx="1.8"/></svg>',
+ chain:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="2" y="8" width="11" height="8" rx="4"/><rect x="11" y="8" width="11" height="8" rx="4"/></svg>',
+ matrix:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M3 12h18"/><circle cx="7.5" cy="7.5" r="1.6" fill="currentColor"/></svg>',
+ gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.3"/><circle cx="10" cy="17" r="2.3"/></svg>',
+ left:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>',
+ right:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>',
+ x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+ ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+ bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15z"/><path d="M10 21h4"/></svg>',
+ clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+ brk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 8H6a4 4 0 000 8h3M15 8h3a4 4 0 010 8h-3M12 4v3M12 17v3"/></svg>',
+ sync:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 11a8 8 0 00-14.5-4.5L4 8M4 13a8 8 0 0014.5 4.5L20 16"/><path d="M4 4v4h4M20 20v-4h-4"/></svg>',
+};
+const linkSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><rect x="2" y="8" width="11" height="8" rx="4"/><rect x="11" y="8" width="11" height="8" rx="4"/></svg>';
+
+/* ============ domain ============ */
+const QUADS={
+ ui:{l:'Acil · Önemli',h:'Hemen yap',c:'var(--q1)'},
+ ni:{l:'Acil değil · Önemli',h:'Planla, takvime koy',c:'var(--q2)'},
+ un:{l:'Acil · Önemsiz',h:'Kısa tut ya da devret',c:'var(--q3)'},
+ nn:{l:'Acil değil · Önemsiz',h:'Azalt ya da bırak',c:'var(--q4)'},
+};
+const qc=q=>QUADS[q]?.c||'var(--q4)';
+const RT={
+ daily_count:{g:'Günlük',l:'Günde birkaç kez',p:'day',d:r=>`Günde ${r.target} kez`},
+ daily_duration:{g:'Günlük',l:'Günde belli süre',p:'day',d:r=>`Günde ${r.target} dk`},
+ every_n_days:{g:'Günlük',l:'Birkaç günde bir',p:'day',d:r=>`${r.every} günde bir`},
+ weekly_days:{g:'Haftalık',l:'Belli günlerde',p:'day',d:r=>(r.days||[]).map(i=>DAYS[i]).join(', ')||'Gün seçilmedi'},
+ weekly_count:{g:'Haftalık',l:'Haftada X kez',p:'week',d:r=>`Haftada ${r.target} kez`},
+ monthly_days:{g:'Aylık',l:'Ayın belli günleri',p:'day',d:r=>`Her ayın ${(r.mdays||[]).join(', ')}. günü`},
+ monthly_count:{g:'Aylık',l:'Ayda X kez',p:'month',d:r=>`Ayda ${r.target} kez`},
+ yearly_dates:{g:'Yıllık',l:'Belli tarihlerde',p:'day',d:r=>(r.ydates||[]).map(fmtMD).join(', ')||'Tarih seçilmedi'},
+ yearly_count:{g:'Yıllık',l:'Yılda X kez',p:'year',d:r=>`Yılda ${r.target} kez`},
+};
+const PNAME={day:'gün',week:'hafta',month:'ay',year:'yıl'};
+const COLORS=['#D99A0B','#0F8A82','#2B67CF','#C2453B','#7A55C7','#4E8A2E'];
+
+function dueOnDay(r,d){
+  switch(r.type){
+    case 'weekly_days':return (r.days||[]).includes(wdi(d));
+    case 'monthly_days':{const md=r.mdays||[];const last=daysIn(d.getFullYear(),d.getMonth());return md.includes(d.getDate())||(d.getDate()===last&&md.some(x=>x>last))}
+    case 'every_n_days':{const diff=Math.round((d-pd(r.start))/864e5);return diff>=0&&diff%Math.max(1,r.every||1)===0}
+    case 'yearly_dates':return (r.ydates||[]).includes(`${pad(d.getMonth()+1)}-${pad(d.getDate())}`);
+    default:return true;
+  }
+}
+function pkey(r,d){
+  const p=RT[r.type].p;
+  if(p==='day')return dueOnDay(r,d)?dk(d):null;
+  if(p==='week')return 'W'+dk(monday(d));
+  if(p==='month')return 'M'+d.getFullYear()+'-'+pad(d.getMonth()+1);
+  return 'Y'+d.getFullYear();
+}
+const target=r=>Math.max(1,Number(r.target)||1);
+function aggLog(r){
+  const p=RT[r.type].p, out={};
+  for(const [k,v] of Object.entries(r.log||{})){
+    let key=k;
+    if(p!=='day'){const d=pd(k);key=p==='week'?'W'+dk(monday(d)):p==='month'?'M'+k.slice(0,7):'Y'+k.slice(0,4)}
+    out[key]=(out[key]||0)+v;
+  }
+  return out;
+}
+function periodsList(r,from,to){
+  const p=RT[r.type].p,out=[];
+  if(from>to)return out;
+  if(p==='day'){for(let d=new Date(from);d<=to;d=addD(d,1))if(dueOnDay(r,d))out.push(dk(d))}
+  else if(p==='week'){for(let d=monday(from);d<=to;d=addD(d,7))out.push('W'+dk(d))}
+  else if(p==='month'){let d=new Date(from.getFullYear(),from.getMonth(),1);while(d<=to){out.push('M'+d.getFullYear()+'-'+pad(d.getMonth()+1));d=new Date(d.getFullYear(),d.getMonth()+1,1)}}
+  else{for(let y=from.getFullYear();y<=to.getFullYear();y++)out.push('Y'+y)}
+  return out;
+}
+function periodStart(r,d){const p=RT[r.type].p;if(p==='day')return d;if(p==='week')return monday(d);if(p==='month')return new Date(d.getFullYear(),d.getMonth(),1);return new Date(d.getFullYear(),0,1)}
+function chainInfo(r){
+  const t=today(), agg=aggLog(r), T=target(r);
+  const start=pd(r.start||dk(t));
+  const from=new Date(Math.max(start,addD(t,-730)));
+  const prevEnd=addD(periodStart(r,t),-1);
+  const past=periodsList(r,from,prevEnd);
+  const cur=pkey(r,t);
+  const kept=new Set(r.kept||[]),broken=new Set(r.broken||[]);
+  const st=k=>(agg[k]||0)>=T?'done':kept.has(k)?'kept':broken.has(k)?'broken':'pending';
+  let streak=0,pending=[];
+  if(cur&&st(cur)==='done')streak++;
+  for(let i=past.length-1;i>=0;i--){const s=st(past[i]);if(s==='broken')break;if(s==='done')streak++;if(s==='pending')pending.push(past[i])}
+  let best=0,run=0;for(const k of past){const s=st(k);if(s==='broken'||s==='pending'&&false){run=0}else if(s==='done'){run++;best=Math.max(best,run)}if(s==='broken')run=0}
+  best=Math.max(best,streak);
+  const recent=past.slice(-9).map(k=>({k,s:st(k)}));
+  if(cur)recent.push({k:cur,s:st(cur)==='done'?'done':'cur'});
+  return {streak,best,pending:pending.reverse().slice(-30),recent,cur,val:cur?(agg[cur]||0):0,T,agg};
+}
+function periodLabel(r,k){
+  if(k[0]==='W'){const d=pd(k.slice(1));return `${fmtDay(d)} haftası`}
+  if(k[0]==='M'){const[y,m]=k.slice(1).split('-').map(Number);return `${MON[m-1]} ${y}`}
+  if(k[0]==='Y')return k.slice(1);
+  const d=pd(k);return `${fmtDay(d)} ${DAYS_L[wdi(d)]}`;
+}
+
+/* ============ state & storage ============ */
+const PARTS=[['sabah','Sabah'],['ogle','Öğle'],['aksam','Akşam']];
+const partName=p=>(PARTS.find(x=>x[0]===p)||[,''])[1];
+const defSettings=()=>({partTimes:{sabah:'08:00',ogle:'12:30',aksam:'19:00'},showRoutines:true,eodTime:'21:30',eowDay:6,eowTime:'20:00',taskLead:10,sync:{cats:{tasks:true,routines:true,logs:true,chains:true,timers:false},auto:false,last:null}});
+const SB_URL='https://tlxgrrrnpzhgviashxgn.supabase.co';
+const SB_KEY='sb_publishable_PzH8fyI5qyCTQhyKe-ZKDw_dBqA3IsS';
+const emptyState=()=>({tasks:{},routines:{},settings:defSettings()});
+let S=ls.get('halka-cache',null)||emptyState();
+S.settings=Object.assign(defSettings(),S.settings||{});
+let MODE='loading',sb=null,USER=null,STATUS='',channel=null;
+const timers=new Map();
+const dirty=new Set(ls.get('halka-dirty',[]));
+const saveCache=()=>{ls.set('halka-cache',S);ls.set('halka-dirty',[...dirty])};
+const kindOf=id=>id==='settings'?'settings':id==='sync_outbox'?'sync':id.startsWith('t_')?'task':id.startsWith('r_')?'routine':'other';
+function objFor(id){
+  if(id==='settings')return S.settings;
+  if(id.startsWith('t_'))return S.tasks[id.slice(2)];
+  if(id.startsWith('r_'))return S.routines[id.slice(2)];
+  return null;
+}
+function persist(kind,id){
+  const docId=kind==='s'?'settings':kind+'_'+id;
+  dirty.add(docId);saveCache();
+  clearTimeout(timers.get(docId));
+  timers.set(docId,setTimeout(()=>flush(docId),300));
+  if(S.settings.sync.auto)scheduleSync();
+}
+async function flush(docId){
+  timers.delete(docId);
+  if(!USER||!sb||!navigator.onLine){setStatus();return}
+  const obj=objFor(docId);
+  try{
+    const r=obj
+      ?await sb.from('halka_items').upsert({user_id:USER.id,id:docId,kind:kindOf(docId),data:JSON.parse(JSON.stringify(obj)),updated_at:new Date().toISOString()})
+      :await sb.from('halka_items').delete().eq('id',docId);
+    if(r.error)throw r.error;
+    if(!timers.has(docId)){dirty.delete(docId);saveCache()}
+    setStatus('');
+  }catch(e){setStatus('Kaydedilemedi, bağlantı gelince tekrar denenecek')}
+}
+function flushAll(){for(const d of [...dirty])flush(d)}
+function setStatus(msg){if(msg!=null)STATUS=msg;const el=document.querySelector('.store');if(el)el.innerHTML=storeText()}
+function storeText(){
+  if(MODE==='local')return '<span class="dot"></span>Giriş yapılmadı · sadece bu cihaz';
+  if(MODE!=='db')return '<span class="dot"></span>Bağlanıyor…';
+  if(!navigator.onLine)return `<span class="dot"></span>Çevrimdışı${dirty.size?` · ${dirty.size} değişiklik bekliyor`:''}`;
+  if(STATUS)return `<span class="dot"></span>${esc(STATUS)}`;
+  return `<span class="dot on"></span>Tüm cihazlarda eşitleniyor${dirty.size?` · ${dirty.size} gönderiliyor`:''}`;
+}
+window.addEventListener('online',()=>{setStatus('');flushAll();pull()});
+window.addEventListener('offline',()=>setStatus());
+function applyRow(row,deleted){
+  const id=row&&row.id;if(!id||dirty.has(id))return;
+  if(id==='settings'){if(!deleted&&row.data)S.settings=Object.assign(defSettings(),row.data)}
+  else if(id.startsWith('t_')){if(deleted)delete S.tasks[id.slice(2)];else if(row.data)S.tasks[id.slice(2)]=row.data}
+  else if(id.startsWith('r_')){if(deleted)delete S.routines[id.slice(2)];else if(row.data)S.routines[id.slice(2)]=row.data}
+}
+async function pull(){
+  if(!USER||!sb)return;
+  const all=[];let from=0;
+  for(;;){
+    const {data,error}=await sb.from('halka_items').select('id,data').range(from,from+999);
+    if(error){setStatus(error.code==='42P01'||/halka_items/.test(error.message||'')?'Veritabanı tablosu bulunamadı (SQL adımı)':'Veriler alınamadı');return}
+    all.push(...data);if(data.length<1000)break;from+=1000;
+  }
+  const t={},r={};let st=null;
+  for(const row of all){
+    if(row.id==='settings')st=row.data;
+    else if(row.id.startsWith('t_'))t[row.id.slice(2)]=row.data;
+    else if(row.id.startsWith('r_'))r[row.id.slice(2)]=row.data;
+  }
+  for(const id of dirty){
+    const k=id.slice(2);
+    if(id.startsWith('t_')){if(S.tasks[k])t[k]=S.tasks[k];else delete t[k]}
+    if(id.startsWith('r_')){if(S.routines[k])r[k]=S.routines[k];else delete r[k]}
+  }
+  S.tasks=t;S.routines=r;
+  if(st&&!dirty.has('settings'))S.settings=Object.assign(defSettings(),st);
+  saveCache();setStatus('');render();
+}
+function subscribe(){
+  if(channel)sb.removeChannel(channel);
+  channel=sb.channel('halka-'+USER.id)
+    .on('postgres_changes',{event:'*',schema:'public',table:'halka_items',filter:'user_id=eq.'+USER.id},p=>{
+      if(p.eventType==='DELETE')applyRow(p.old,true);else applyRow(p.new,false);
+      saveCache();render();
+    }).subscribe();
+}
+function onUser(){
+  if(USER){
+    const owner=ls.get('halka-owner',null);
+    if(owner&&owner!==USER.id){S=emptyState();dirty.clear()}
+    else if(!owner){
+      for(const id of Object.keys(S.tasks))dirty.add('t_'+id);
+      for(const id of Object.keys(S.routines))dirty.add('r_'+id);
+    }
+    ls.set('halka-owner',USER.id);saveCache();
+    MODE='db';hideAuth();render();
+    pull().then(flushAll);subscribe();
+  }else if(MODE!=='local'){
+    MODE='auth';showAuth();render();
+  }
+}
+async function boot(){
+  render();
+  if(!window.supabase){MODE='local';render();toast('Eşitleme kitaplığı yüklenemedi; veriler bu cihazda tutuluyor');return}
+  sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  sb.auth.onAuthStateChange((ev,session)=>{
+    const u=session?.user||null;
+    if(ev==='PASSWORD_RECOVERY'){showAuth('reset');return}
+    if((u?.id||null)!==(USER?.id||null)){USER=u;onUser()}
+  });
+  const {data}=await sb.auth.getSession();
+  USER=data?.session?.user||null;
+  if(!USER&&ls.get('halka-localmode',false))MODE='local';
+  onUser();
+  const q=new URLSearchParams(location.search);
+  if(location.hash==='#ekle'||q.has('ekle'))openQuick();
+}
+
+/* ============ auth screen ============ */
+let AUTH_MODE='in';
+function showAuth(mode){
+  if(mode)AUTH_MODE=mode;
+  const el=$('#auth');el.hidden=false;
+  const titles={in:'Giriş yap',up:'Hesap oluştur',forgot:'Şifreni sıfırla',reset:'Yeni şifre belirle'};
+  el.innerHTML=`<form class="box" id="auth-form" novalidate>
+    <div class="brand" style="padding:0">${brandSvg()}Halka</div>
+    <h1 style="font-size:26px">${titles[AUTH_MODE]}</h1>
+    <p class="sub" style="margin:0">${AUTH_MODE==='up'?'Bir kez hesap açınca telefon, tablet ve bilgisayarda aynı planı görürsün.':AUTH_MODE==='forgot'?'E-postana sıfırlama bağlantısı göndereceğiz.':AUTH_MODE==='reset'?'Hesabın için yeni bir şifre yaz.':'Telefonda, tablette ve bilgisayarda aynı hesapla gir.'}</p>
+    ${AUTH_MODE!=='reset'?`<label class="f">E-posta<input class="inp" id="au-email" type="email" autocomplete="email" required></label>`:''}
+    ${AUTH_MODE!=='forgot'?`<label class="f">Şifre<input class="inp" id="au-pass" type="password" autocomplete="${AUTH_MODE==='in'?'current-password':'new-password'}" minlength="6" required></label>`:''}
+    <div class="err" id="au-err"></div>
+    <button class="btn pri" type="submit" id="au-submit">${titles[AUTH_MODE]}</button>
+    <div class="btns" style="justify-content:space-between">
+      ${AUTH_MODE==='in'?`<button type="button" class="btn" data-act="authMode" data-m="up">Hesap oluştur</button><button type="button" class="btn" data-act="authMode" data-m="forgot">Şifremi unuttum</button>`:AUTH_MODE!=='reset'?`<button type="button" class="btn" data-act="authMode" data-m="in">Girişe dön</button>`:''}
+    </div>
+    ${AUTH_MODE==='in'?`<button type="button" class="btn" style="background:none;border:0;color:var(--muted)" data-act="localMode">Şimdilik giriş yapmadan bu cihazda kullan</button>`:''}
+  </form>`;
+  $('#auth-form').addEventListener('submit',authSubmit);
+}
+function hideAuth(){const el=$('#auth');el.hidden=true;el.innerHTML=''}
+const AUTH_ERR={'Invalid login credentials':'E-posta ya da şifre hatalı.','Email not confirmed':'E-postanı henüz onaylamadın. Gelen kutundaki bağlantıya dokun.','User already registered':'Bu e-postayla zaten bir hesap var. Giriş yapmayı dene.'};
+async function authSubmit(e){
+  e.preventDefault();
+  const err=$('#au-err'),btn=$('#au-submit');err.textContent='';
+  const email=$('#au-email')?.value.trim(),pass=$('#au-pass')?.value;
+  if(AUTH_MODE!=='reset'&&!/^\S+@\S+\.\S+$/.test(email||'')){err.textContent='Geçerli bir e-posta yaz.';return}
+  if(AUTH_MODE!=='forgot'&&(pass||'').length<6){err.textContent='Şifre en az 6 karakter olmalı.';return}
+  btn.disabled=true;
+  try{
+    const redirect=location.origin+location.pathname;
+    let r;
+    if(AUTH_MODE==='in')r=await sb.auth.signInWithPassword({email,password:pass});
+    if(AUTH_MODE==='up'){r=await sb.auth.signUp({email,password:pass,options:{emailRedirectTo:redirect}});if(!r.error&&!r.data.session){err.style.color='var(--teal)';err.textContent='Onay e-postası gönderildi. Bağlantıya dokunduktan sonra buradan giriş yap.';AUTH_MODE='in';btn.disabled=false;return}}
+    if(AUTH_MODE==='forgot'){r=await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect});if(!r.error){err.style.color='var(--teal)';err.textContent='Sıfırlama bağlantısı e-postana gönderildi.';btn.disabled=false;return}}
+    if(AUTH_MODE==='reset'){r=await sb.auth.updateUser({password:pass});if(!r.error){AUTH_MODE='in';hideAuth();toast('Şifren güncellendi')}}
+    if(r?.error)throw r.error;
+  }catch(x){err.textContent=AUTH_ERR[x.message]||('İşlem tamamlanamadı: '+(x.message||'bağlantını kontrol et'))}
+  btn.disabled=false;
+}
+
+/* ============ UI state ============ */
+let UI={tab:ls.get('halka-tab','today'),day:dk(today()),planMode:'week',planAnchor:dk(today()),selDay:dk(today()),mxFilter:'week'};
+function setTab(t){UI.tab=t;ls.set('halka-tab',t);render();window.scrollTo(0,0)}
+
+/* ============ queries ============ */
+const tasksArr=()=>Object.values(S.tasks);
+const routinesArr=()=>Object.values(S.routines).sort((a,b)=>(a.created||0)-(b.created||0));
+const tasksOnDay=k=>tasksArr().filter(t=>t.scope==='day'&&t.date===k);
+function scopeEnd(t){
+  const d=pd(t.date);
+  if(t.scope==='day')return d;
+  if(t.scope==='week')return addD(monday(d),6);
+  if(t.scope==='month')return new Date(d.getFullYear(),d.getMonth()+1,0);
+  if(t.scope==='year')return new Date(d.getFullYear(),11,31);
+  return null;
+}
+function overdueTasks(){const t0=today();return tasksArr().filter(t=>!t.done&&t.scope!=='none'&&scopeEnd(t)<t0)}
+function pendingChains(){const out=[];for(const r of routinesArr()){if(r.paused)continue;const ci=chainInfo(r);for(const k of ci.pending)out.push({r,k})}return out}
+function routinesForDay(k){
+  const d=pd(k);
+  return routinesArr().filter(r=>!r.paused&&pd(r.start||k)<=d&&(RT[r.type].p!=='day'||dueOnDay(r,d)));
+}
+function routineDayVal(r,k){return (r.log||{})[k]||0}
+function routinePeriodVal(r,d){const key=pkey(r,d);if(!key)return 0;if(RT[r.type].p==='day')return (r.log||{})[key]||0;return aggLog(r)[key]||0}
+const sortTasks=a=>a.sort((x,y)=>(x.done-y.done)||((toMin(x.time)??9999)-(toMin(y.time)??9999))||('ui ni un nn'.indexOf(x.quad||'zz')-'ui ni un nn'.indexOf(y.quad||'zz'))||(x.created-y.created));
+
+/* ============ countdown math ============ */
+function dayPlanned(d,fromMin){
+  const k=dk(d),ivs=[];let loose=0;
+  for(const t of tasksOnDay(k)){
+    if(t.done||!t.deduct||!t.dur)continue;
+    const s=toMin(t.time);
+    if(s==null)loose+=Number(t.dur);else ivs.push([s,s+Number(t.dur)]);
+  }
+  for(const r of routinesForDay(k)){
+    if(!r.deduct||!r.dur||RT[r.type].p!=='day')continue;
+    const done=routineDayVal(r,k);
+    let need=r.type==='daily_count'?Math.max(0,target(r)-done)*r.dur:r.type==='daily_duration'?Math.max(0,target(r)-done):(done>=1?0:Number(r.dur));
+    if(r.type==='daily_duration')need=Math.min(need,Number(r.dur)||need);
+    if(!need)continue;
+    const s=toMin(r.time);
+    if(s==null)loose+=need;else ivs.push([s,s+need]);
+  }
+  ivs.sort((a,b)=>a[0]-b[0]);
+  let total=0,cs=-1,ce=-1;
+  for(let [s,e] of ivs){s=Math.max(s,fromMin);e=Math.min(e,1440);if(e<=s)continue;if(s>ce){if(ce>cs)total+=ce-cs;cs=s;ce=e}else ce=Math.max(ce,e)}
+  if(ce>cs)total+=ce-cs;
+  return total+loose;
+}
+function plannedUntil(end){
+  const now=new Date(),t0=today();let m=0;
+  const nowMin=now.getHours()*60+now.getMinutes();
+  for(let d=new Date(t0);d<end;d=addD(d,1))m+=dayPlanned(d,dk(d)===dk(t0)?nowMin:0);
+  for(const t of tasksArr()){
+    if(t.done||!t.deduct||!t.dur||t.scope==='day'||t.scope==='none')continue;
+    const e=scopeEnd(t);if(e>=t0&&e<end)m+=Number(t.dur);
+  }
+  return m;
+}
+let clockCache={at:0};
+function renderClocks(){
+  const now=new Date(),t0=today();
+  const ends={gun:addD(t0,1),hafta:addD(monday(t0),7),ay:new Date(t0.getFullYear(),t0.getMonth()+1,1),yil:new Date(t0.getFullYear()+1,0,1)};
+  const starts={gun:t0,hafta:monday(t0),ay:new Date(t0.getFullYear(),t0.getMonth(),1),yil:new Date(t0.getFullYear(),0,1)};
+  if(now-clockCache.at>20000||clockCache.v!==VERSION){clockCache={at:+now,v:VERSION,p:{gun:plannedUntil(ends.gun),hafta:plannedUntil(ends.hafta),ay:plannedUntil(ends.ay),yil:plannedUntil(ends.yil)}}}
+  const P=clockCache.p,names={gun:'Gün',hafta:'Hafta',ay:'Ay',yil:'Yıl'};
+  $('#clocks').innerHTML=Object.keys(ends).map(k=>{
+    const left=ends[k]-now,tot=ends[k]-starts[k],pct=Math.max(0,Math.min(100,100*left/tot));
+    let v;
+    if(k==='gun'){const s=Math.floor(left/1000);v=`${pad(Math.floor(s/3600))}:${pad(Math.floor(s%3600/60))}:${pad(s%60)}`}
+    else v=`${Math.floor(left/36e5).toLocaleString('tr-TR')} sa`;
+    const free=left/6e4-P[k];
+    const s=P[k]>0?`boş ${k==='gun'?fmtDur(Math.max(0,free)):Math.max(0,Math.floor(free/60)).toLocaleString('tr-TR')+' sa'}`:'planlı süre yok';
+    return `<button class="clock" data-act="clockinfo" data-k="${k}" title="${names[k]} bitimine kalan"><div class="k">${names[k]}</div><div class="v">${v}</div><div class="s">${s}</div><div class="bar"><i style="width:${pct}%"></i></div></button>`;
+  }).join('');
+}
+let VERSION=0;
+
+/* ============ render shell ============ */
+const TABS=[['today','Bugün',IC.today],['plan','Plan',IC.plan],['routines','Rutinler',IC.chain],['matrix','Matris',IC.matrix],['settings','Ayarlar',IC.gear]];
+function render(){
+  VERSION++;
+  const storeTxt=storeText();
+  $('#side').innerHTML=`<div class="brand">${brandSvg()}Halka</div>`+TABS.map(([k,l,i])=>`<button class="navbtn" data-tab="${k}" aria-current="${UI.tab===k}">${i}${l}</button>`).join('')+`<div class="store">${storeTxt}</div>`;
+  $('#tabbar').innerHTML=TABS.map(([k,l,i])=>`<button data-tab="${k}" aria-current="${UI.tab===k}">${i}<span>${l}</span></button>`).join('');
+  const v={today:viewToday,plan:viewPlan,routines:viewRoutines,matrix:viewMatrix,settings:viewSettings}[UI.tab]||viewToday;
+  $('#view').innerHTML=v();
+  renderClocks();
+}
+function brandSvg(){return `<svg viewBox="0 0 40 40"><rect x="3" y="12" width="20" height="16" rx="8" fill="none" stroke="var(--gold)" stroke-width="4.5"/><rect x="17" y="12" width="20" height="16" rx="8" fill="none" stroke="var(--ink)" stroke-width="4.5"/></svg>`}
+
+/* ============ rows ============ */
+function taskRow(t,opts={}){
+  const meta=[];
+  if(t.time)meta.push(`<span class="mono">${t.time}${t.dur?'–'+addMin(t.time,t.dur):''}</span>`);
+  else if(t.dur)meta.push(fmtDur(t.dur));
+  if(t.quad)meta.push(`<span class="qtag" style="--qc:${qc(t.quad)}">${QUADS[t.quad].l}</span>`);
+  if(opts.showDate&&t.scope==='day')meta.push(fmtDay(pd(t.date)));
+  if(t.deduct&&t.dur)meta.push('sayaçtan düşülür');
+  if(t.postponed)meta.push(`${t.postponed}× ertelendi`);
+  return `<div class="row ${t.done?'done':''}" style="--qc:${qc(t.quad)}">
+    <button class="check ${t.done?'on':''}" data-act="toggleTask" data-id="${t.id}" aria-label="${t.done?'Tamamlanmadı yap':'Tamamlandı'}">${IC.ok}</button>
+    <div class="body" data-act="editTask" data-id="${t.id}"><div class="t">${esc(t.title)}</div>${meta.length?`<div class="m">${meta.join('')}</div>`:''}</div>
+  </div>`;
+}
+function addMin(t,m){const x=toMin(t)+Number(m);return `${pad(Math.floor(x/60)%24)}:${pad(x%60)}`}
+function ringSvg(frac,color,done){
+  const R=18,C=2*Math.PI*R,f=Math.max(0,Math.min(1,frac));
+  return `<svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="${R}" fill="${done?color:'none'}" stroke="var(--line)" stroke-width="4"/><circle cx="22" cy="22" r="${R}" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${C*f} ${C}" transform="rotate(-90 22 22)"/>${done?`<path d="M14 22.5l5 5 11-11" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>`:''}</svg>`;
+}
+function routineRow(r,k,slot){
+  const d=pd(k),p=RT[r.type].p,T=target(r);
+  const pv=routinePeriodVal(r,d),dv=routineDayVal(r,k);
+  const future=d>today();
+  const nParts=(r.parts||[]).length;
+  if(slot!=null&&r.type==='daily_count'&&nParts>1){
+    const sd=dv>slot,ci=chainInfo(r);
+    return `<div class="row rrow ${sd?'done':''}" style="--rc:${r.color}">
+    <button class="rbtn" data-act="markRoutine" data-id="${r.id}" data-k="${k}" data-slot="${slot}" ${future?'disabled':''} aria-label="${esc(r.name)} işaretle">${ringSvg(sd?1:0,r.color,sd)}</button>
+    <div class="body" data-act="routineDetail" data-id="${r.id}"><div class="t">${esc(r.name)}</div><div class="m">günde ${pv}/${T} · <span class="link">${linkSvg}${ci.streak} gün</span></div></div></div>`;
+  }
+  const done=pv>=T;
+  const ci=chainInfo(r);
+  let label;
+  if(r.type==='daily_duration')label=`${pv}/${T} dk`;
+  else if(p==='day')label=T>1?`${pv}/${T}`:'';
+  else label=`bu ${PNAME[p]} ${pv}/${T}${dv?` · bugün ${dv}`:''}`;
+  const n=r.type==='daily_duration'?'':(T>1&&!done?`${pv}/${T}`:'');
+  const meta=[];
+  if(r.time)meta.push(`<span class="mono">${r.time}</span>`);
+  if(label)meta.push(label);
+  meta.push(`<span class="link">${linkSvg}${ci.streak} ${PNAME[p]}</span>`);
+  return `<div class="row rrow ${done?'done':''}" style="--rc:${r.color}">
+    <button class="rbtn" data-act="markRoutine" data-id="${r.id}" data-k="${k}" ${future?'disabled title="Gelecek gün işaretlenemez"':''} aria-label="${esc(r.name)} işaretle">${ringSvg(pv/T,r.color,done)}<span class="n">${n}</span></button>
+    <div class="body" data-act="routineDetail" data-id="${r.id}"><div class="t">${esc(r.name)}</div><div class="m">${meta.join(' · ')}</div></div>
+  </div>`;
+}
+
+/* ============ TODAY ============ */
+function viewToday(){
+  const k=UI.day,d=pd(k),isToday=k===dk(today());
+  const tasks=sortTasks(tasksOnDay(k));
+  const showR=S.settings.showRoutines;
+  const rts=showR?routinesForDay(k):[];
+  const untimedT=tasks.filter(t=>!t.time&&!t.done),timedT=tasks.filter(t=>t.time&&!t.done),doneT=tasks.filter(t=>t.done);
+  const hasP=r=>(r.parts||[]).length>0;
+  const untimedR=rts.filter(r=>!r.time&&!hasP(r)),timedR=rts.filter(r=>r.time&&!hasP(r));
+  const partSecs=PARTS.map(([pk,pl])=>{
+    const rows=rts.filter(r=>(r.parts||[]).includes(pk)).map(r=>{
+      const i=r.parts.indexOf(pk);
+      if(r.type!=='daily_count'&&i>0)return '';
+      return routineRow(r,k,r.type==='daily_count'&&r.parts.length>1?PARTS.map(x=>x[0]).filter(x=>r.parts.includes(x)).indexOf(pk):null);
+    }).join('');
+    return rows?`<div class="sec"><h2>${pl} <span style="font-weight:500;letter-spacing:0;text-transform:none">· ${S.settings.partTimes?.[pk]||''}</span></h2></div><div class="list">${rows}</div>`:'';
+  }).join('');
+  let banners='';
+  if(isToday){
+    const od=overdueTasks().length,pc=pendingChains().length;
+    if(od)banners+=`<button class="banner" data-act="openOverdue">${IC.clock}<span>${od} görev zamanında yapılmadı. Ne yapalım?</span>${IC.right}</button>`;
+    if(pc)banners+=`<button class="banner" data-act="openChains">${IC.brk}<span>${pc} rutin dönemi işaretlenmedi. Zincir kontrolü</span>${IC.right}</button>`;
+    if(MODE==='local')banners+=`<div class="banner blue">${IC.sync}<span class="small">Giriş yapmadığın için veriler sadece bu cihazda. Tüm cihazlarda görmek için giriş yap.</span><button class="chip" data-act="signIn">Giriş yap</button></div>`;
+  }
+  // summary
+  const totalItems=tasks.length+rts.length;
+  const doneItems=tasks.filter(t=>t.done).length+rts.filter(r=>routinePeriodVal(r,d)>=target(r)).length;
+  const frac=totalItems?doneItems/totalItems:0;
+  const summary=`<div class="summary"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="none" stroke="var(--surface2)" stroke-width="8"/><circle cx="32" cy="32" r="26" fill="none" stroke="var(--teal)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${2*Math.PI*26*frac} 999" transform="rotate(-90 32 32)"/></svg>
+    <div><div class="big">${doneItems} / ${totalItems} tamam</div><div class="sub">${totalItems?(frac===1?'Günün tamamı bitti. Zincirlerin sağlam.':frac>=.5?'Yarıyı geçtin, devam.':'Bir halka daha ekleyelim mi?'):'Bu gün için henüz bir şey yok.'}</div></div></div>`;
+  // timeline merge
+  const nowMin=new Date().getHours()*60+new Date().getMinutes();
+  const items=[...timedT.map(t=>({m:toMin(t.time),h:`<div style="display:flex;gap:8px;align-items:center"><div class="timecol">${t.time}</div><div style="flex:1;min-width:0">${taskRow(t)}</div></div>`})),
+               ...timedR.map(r=>({m:toMin(r.time),h:`<div style="display:flex;gap:8px;align-items:center"><div class="timecol">${r.time}</div><div style="flex:1;min-width:0">${routineRow(r,k)}</div></div>`}))].sort((a,b)=>a.m-b.m);
+  let tl='',nowPut=!isToday;
+  for(const it of items){if(!nowPut&&it.m>nowMin){tl+=`<div class="nowline">${pad(Math.floor(nowMin/60))}:${pad(nowMin%60)}</div>`;nowPut=true}tl+=it.h}
+  if(!nowPut&&items.length)tl+=`<div class="nowline">${pad(Math.floor(nowMin/60))}:${pad(nowMin%60)}</div>`;
+  const inbox=isToday?sortTasks(tasksArr().filter(t=>t.scope==='none'&&!t.done)):[];
+  const nothing=!routinesArr().length&&!tasksArr().length;
+  return `
+  <div class="head">
+    <button class="iconbtn" data-act="dayNav" data-n="-1" aria-label="Önceki gün">${IC.left}</button>
+    <div style="flex:1;min-width:0"><h1>${isToday?'Bugün':DAYS_L[wdi(d)]}</h1><div class="sub">${fmtDay(d)} ${d.getFullYear()}, ${DAYS_L[wdi(d)]}</div></div>
+    ${!isToday?`<button class="chip" data-act="goToday">Bugüne dön</button>`:''}
+    <button class="iconbtn" data-act="dayNav" data-n="1" aria-label="Sonraki gün">${IC.right}</button>
+  </div>
+  ${banners}
+  ${nothing?starter():summary}
+  <div class="chips" style="margin:10px 0 0"><button class="chip" aria-pressed="${showR}" data-act="toggleShowR">Rutinleri göster</button></div>
+  <div class="sec"><h2>Saati belirsiz</h2><button class="add" data-act="newTask" data-scope="day" data-date="${k}">+ Görev</button></div>
+  <div class="list">${untimedR.map(r=>routineRow(r,k)).join('')}${untimedT.map(t=>taskRow(t)).join('')}${!untimedR.length&&!untimedT.length?'<div class="empty">Saat atanmamış görev yok.</div>':''}</div>
+  ${partSecs}
+  <div class="sec"><h2>Saat çizelgesi</h2><button class="add" data-act="newTask" data-scope="day" data-date="${k}" data-timed="1">+ Saatli görev</button></div>
+  <div class="list">${tl||'<div class="empty">Saat verilmiş bir şey yok. Bir göreve saat ve süre verince burada sıralanır.</div>'}</div>
+  ${inbox.length?`<div class="sec"><h2>Gelen kutusu · tarih bekliyor</h2></div><div class="list">${inbox.map(t=>taskRow(t)).join('')}</div>`:''}
+  ${doneT.length?`<div class="sec"><h2>Tamamlananlar (${doneT.length})</h2></div><div class="list">${doneT.map(t=>taskRow(t)).join('')}</div>`:''}
+  `;
+}
+function starter(){return `<div class="card"><h3>Planlayıcın hazır</h3><p class="muted small" style="margin:0">Sağ alttaki + ile saniyeler içinde görev ekleyebilirsin. Rutinlerini Rutinler sekmesinden kur; her işaretleme zincirine bir halka ekler.</p><div class="btns"><button class="btn gold" data-act="newRoutine">İlk rutini kur</button><button class="btn" data-act="seedExamples">Örnek rutinlerle dene</button></div></div>`}
+
+/* ============ PLAN ============ */
+function viewPlan(){
+  const m=UI.planMode,a=pd(UI.planAnchor);
+  let title,body;
+  const seg=`<div class="seg">${[['week','Hafta'],['month','Ay'],['year','Yıl']].map(([k,l])=>`<button aria-pressed="${m===k}" data-act="planMode" data-m="${k}">${l}</button>`).join('')}</div>`;
+  if(m==='week'){
+    const w0=monday(a),wk=dk(w0);
+    title=`${fmtDay(w0)} – ${fmtDay(addD(w0,6))}`;
+    const wTasks=sortTasks(tasksArr().filter(t=>t.scope==='week'&&dk(monday(pd(t.date)))===wk));
+    let days='';
+    for(let i=0;i<7;i++){
+      const d=addD(w0,i),k=dk(d),ts=sortTasks(tasksOnDay(k)),rs=S.settings.showRoutines?routinesForDay(k).filter(r=>RT[r.type].p==='day'):[];
+      const rDone=rs.filter(r=>routineDayVal(r,k)>=target(r)).length;
+      days+=`<div class="dayblock ${k===dk(today())?'today':''}"><button class="dh" data-act="openDay" data-k="${k}">${DAYS_L[i]} <span class="muted" style="font-weight:500">${fmtDay(d)}</span><span class="sub">${ts.filter(t=>t.done).length}/${ts.length} görev${rs.length?` · ${rDone}/${rs.length} rutin`:''}</span></button>
+        ${ts.map(miniTask).join('')||'<div class="small muted">Görev yok</div>'}</div>`;
+    }
+    const all=tasksArr().filter(t=>t.scope==='day'&&monday(pd(t.date)).getTime()===w0.getTime()).concat(wTasks);
+    body=`<div class="sub" style="margin-bottom:6px">Bu haftanın toplamı: ${all.filter(t=>t.done).length}/${all.length} görev tamam</div>
+    <div class="sec"><h2>Bu hafta · gün atanmamış</h2><button class="add" data-act="newTask" data-scope="week" data-date="${wk}">+ Ekle</button></div>
+    <div class="list">${wTasks.map(t=>taskRow(t)).join('')||'<div class="empty">Haftaya bırakılmış görev yok.</div>'}</div>
+    <div class="sec"><h2>Günler</h2></div><div class="list">${days}</div>`;
+  }else if(m==='month'){
+    const y=a.getFullYear(),mo=a.getMonth(),mk=`${y}-${pad(mo+1)}`;
+    title=`${MON[mo]} ${y}`;
+    const mTasks=sortTasks(tasksArr().filter(t=>t.scope==='month'&&t.date.slice(0,7)===mk));
+    const first=new Date(y,mo,1),gs=monday(first);
+    let cells=DAYS.map(x=>`<div class="wd">${x}</div>`).join('');
+    for(let i=0;i<42;i++){
+      const d=addD(gs,i);if(i>=35&&d.getMonth()!==mo)break;
+      const k=dk(d),ts=tasksOnDay(k);
+      const dots=ts.slice(0,6).map(t=>`<i style="background:${t.done?'var(--line)':qc(t.quad)}"></i>`).join('');
+      cells+=`<button class="cell ${d.getMonth()!==mo?'out':''} ${k===dk(today())?'today':''} ${k===UI.selDay?'sel':''}" data-act="selDay" data-k="${k}"><span class="d">${d.getDate()}</span><span class="dots">${dots}</span>${ts.length?`<span class="c">${ts.filter(t=>t.done).length}/${ts.length}</span>`:''}</button>`;
+    }
+    const sd=pd(UI.selDay),sTasks=sortTasks(tasksOnDay(UI.selDay));
+    const all=tasksArr().filter(t=>(t.scope==='day'||t.scope==='month')&&t.date.slice(0,7)===mk);
+    body=`<div class="sub" style="margin-bottom:6px">Bu ayın toplamı: ${all.filter(t=>t.done).length}/${all.length} görev tamam</div>
+    <div class="sec"><h2>Bu ay · gün atanmamış</h2><button class="add" data-act="newTask" data-scope="month" data-date="${mk}-01">+ Ekle</button></div>
+    <div class="list">${mTasks.map(t=>taskRow(t)).join('')||'<div class="empty">Aya bırakılmış görev yok.</div>'}</div>
+    <div class="sec"><h2>Takvim</h2></div><div class="cal">${cells}</div>
+    <div class="sec"><h2>${fmtDay(sd)} ${DAYS_L[wdi(sd)]}</h2><button class="add" data-act="newTask" data-scope="day" data-date="${UI.selDay}">+ Görev</button><button class="add" style="margin-left:0" data-act="openDay" data-k="${UI.selDay}">Günü aç</button></div>
+    <div class="list">${sTasks.map(t=>taskRow(t)).join('')||'<div class="empty">Bu güne görev eklenmemiş.</div>'}</div>`;
+  }else{
+    const y=a.getFullYear();
+    title=String(y);
+    const yTasks=sortTasks(tasksArr().filter(t=>t.scope==='year'&&t.date.slice(0,4)===String(y)));
+    let months='';
+    for(let i=0;i<12;i++){
+      const mk=`${y}-${pad(i+1)}`,ts=tasksArr().filter(t=>(t.scope==='day'||t.scope==='month'||t.scope==='week')&&t.date.slice(0,7)===mk);
+      const dn=ts.filter(t=>t.done).length;
+      months+=`<button class="mcard ${y===today().getFullYear()&&i===today().getMonth()?'cur':''}" data-act="openMonth" data-k="${mk}-01"><b>${MON[i]}</b><span class="small muted">${ts.length?`${dn}/${ts.length} görev`:'Görev yok'}</span><div class="bar"><i style="width:${ts.length?100*dn/ts.length:0}%"></i></div></button>`;
+    }
+    const all=tasksArr().filter(t=>t.scope!=='none'&&t.date.slice(0,4)===String(y));
+    body=`<div class="sub" style="margin-bottom:6px">Yılın toplamı: ${all.filter(t=>t.done).length}/${all.length} görev tamam</div>
+    <div class="sec"><h2>Bu yıl · ay atanmamış</h2><button class="add" data-act="newTask" data-scope="year" data-date="${y}-01-01">+ Ekle</button></div>
+    <div class="list">${yTasks.map(t=>taskRow(t)).join('')||'<div class="empty">Yıla bırakılmış görev yok.</div>'}</div>
+    <div class="sec"><h2>Aylar</h2></div><div class="months">${months}</div>`;
+  }
+  return `<div class="head"><h1>${title}</h1>${seg}</div>
+  <div class="head" style="margin-top:-4px"><button class="iconbtn" data-act="planNav" data-n="-1" aria-label="Önceki">${IC.left}</button><button class="chip" data-act="planToday">Şimdiye dön</button><button class="iconbtn" data-act="planNav" data-n="1" aria-label="Sonraki">${IC.right}</button></div>
+  ${body}`;
+}
+function miniTask(t){return `<div class="mini" style="--qc:${qc(t.quad)}"><button class="check ${t.done?'on':''}" data-act="toggleTask" data-id="${t.id}" aria-label="Tamamlandı">${IC.ok}</button><span class="t" data-act="editTask" data-id="${t.id}" style="${t.done?'text-decoration:line-through;color:var(--muted)':''}">${t.time?`<span class="mono muted">${t.time}</span> `:''}${esc(t.title)}</span></div>`}
+
+/* ============ ROUTINES ============ */
+function chainSvg(recent,color){
+  const n=recent.length,W=Math.max(1,n)*26+10;
+  let s='';
+  recent.forEach((p,i)=>{
+    const x=6+i*26,y=i%2?11:7,w=30,h=16;
+    let stroke=color,dash='',op=1;
+    if(p.s==='kept'){stroke='var(--muted)';dash='stroke-dasharray="4 3"'}
+    if(p.s==='pending'){stroke='var(--line)'}
+    if(p.s==='broken'){stroke='var(--danger)';op=.5;dash='stroke-dasharray="10 6"'}
+    if(p.s==='cur'){stroke='var(--line)';dash='stroke-dasharray="3 3"'}
+    s+=`<rect class="lk" x="${x}" y="${y}" width="${w}" height="${h}" rx="8" stroke="${stroke}" opacity="${op}" ${dash}><title>${esc(p.k)}</title></rect>`;
+  });
+  return `<svg class="chain" viewBox="0 0 ${W+10} 34" preserveAspectRatio="xMinYMid meet">${s}</svg>`;
+}
+function viewRoutines(){
+  const rs=routinesArr();
+  const cards=rs.map(r=>{
+    const ci=chainInfo(r),p=RT[r.type].p;
+    return `<div class="rcard ${r.paused?'paused':''}" style="--rc:${r.color}">
+      <div class="top"><div style="flex:1;min-width:0"><div class="nm">${esc(r.name)}</div><div class="small muted">${RT[r.type].d(r)}${(r.parts||[]).length?` · ${PARTS.filter(x=>r.parts.includes(x[0])).map(x=>x[1]).join(', ')}`:''}${r.time?` · ${r.time}`:''}${r.dur?` · ${fmtDur(r.dur)}`:''}${r.paused?' · durduruldu':''}</div></div>
+      <button class="rbtn" data-act="markRoutine" data-id="${r.id}" data-k="${dk(today())}" aria-label="Bugün işaretle">${ringSvg(ci.val/ci.T,r.color,ci.val>=ci.T)}</button></div>
+      <div class="streak"><b>${ci.streak}</b><span class="muted small">${PNAME[p]} zincir · en uzun ${ci.best}</span></div>
+      ${chainSvg(ci.recent,r.color)}
+      <div class="btns"><button class="btn" style="padding:8px 12px" data-act="routineDetail" data-id="${r.id}">Ayrıntı</button><button class="btn" style="padding:8px 12px" data-act="editRoutine" data-id="${r.id}">Düzenle</button>${ci.pending.length?`<button class="btn gold" style="padding:8px 12px" data-act="openChains">${ci.pending.length} bekleyen</button>`:''}</div>
+    </div>`;
+  }).join('');
+  return `<div class="head"><h1>Rutinler</h1><button class="btn pri" data-act="newRoutine">+ Yeni rutin</button></div>
+  <p class="sub" style="margin-top:-6px">Her tamamlanan dönem zincire bir halka ekler. İşaretlenmeyen dönemlerde zincir sen onaylamadan kırılmaz.</p>
+  ${rs.length?`<div class="rcards">${cards}</div>`:starter()}`;
+}
+
+/* ============ MATRIX ============ */
+function viewMatrix(){
+  const f=UI.mxFilter,t0=today(),w0=monday(t0),wEnd=addD(w0,6);
+  const inF=t=>{
+    if(t.done)return false;
+    if(f==='all')return true;
+    if(t.scope==='none')return f!=='today';
+    const e=scopeEnd(t),s=t.scope==='day'?pd(t.date):e;
+    if(f==='today')return t.scope==='day'?pd(t.date)<=t0:e<=t0;
+    return (t.scope==='day'?pd(t.date):e)<=wEnd||(t.scope==='week'&&monday(pd(t.date)).getTime()===w0.getTime());
+  };
+  const ts=sortTasks(tasksArr().filter(inF));
+  const q=k=>ts.filter(t=>t.quad===k);
+  const un=ts.filter(t=>!t.quad);
+  const quad=k=>`<div class="quad" style="--qc:${QUADS[k].c}"><div style="display:flex;align-items:baseline;gap:8px"><h3>${QUADS[k].l}</h3><button class="add" style="margin-left:auto;border:0;background:none;color:var(--q2);font-weight:600" data-act="newTask" data-quad="${k}" data-scope="day" data-date="${dk(t0)}">+ Ekle</button></div><div class="hint">${QUADS[k].h}</div>${q(k).map(t=>taskRow(t,{showDate:true})).join('')||'<div class="small muted">Boş</div>'}</div>`;
+  return `<div class="head"><h1>Öncelik matrisi</h1><div class="seg">${[['today','Bugün'],['week','Bu hafta'],['all','Tümü']].map(([k,l])=>`<button aria-pressed="${f===k}" data-act="mx" data-f="${k}">${l}</button>`).join('')}</div></div>
+  <div class="matrix">${quad('ui')}${quad('ni')}${quad('un')}${quad('nn')}</div>
+  ${un.length?`<div class="sec"><h2>Sınıflandırılmamış (${un.length})</h2></div><div class="list">${un.map(t=>taskRow(t,{showDate:true})).join('')}</div>`:''}`;
+}
+
+/* ============ SETTINGS / SYNC ============ */
+const SYNC_CATS=[['tasks','Görevler','başlık, tarih, öncelik, durum'],['routines','Rutinler','ad, tür, hedef, saat'],['logs','Tamamlanma geçmişi','her rutinin işaretlendiği günler'],['chains','Zincirler','güncel ve en uzun zincir'],['timers','Geri sayım özeti','gün/hafta/ay/yıl planlı süreler']];
+function viewSettings(){
+  const st=S.settings,sy=st.sync;
+  const notif=('Notification' in window)?Notification.permission:'yok';
+  return `<div class="head"><h1>Ayarlar</h1></div>
+  <div class="card">
+    <h3>Diğer uygulamayla senkronizasyon</h3>
+    <p class="small muted" style="margin:0">Hangi verilerin ikinci uygulamaya (5 yıllık hedef haritan) gideceğini seç. Seçtiklerin bir senkron kutusuna yazılır; ikinci uygulama hazır olduğunda buradan okuyacak.</p>
+    <div class="list">${SYNC_CATS.map(([k,l,h])=>`<label class="toggle"><input type="checkbox" id="sync-${k}" data-act="syncCat" data-k="${k}" ${sy.cats[k]?'checked':''}><span>${l} <span class="muted small" style="font-weight:500">· ${h}</span></span></label>`).join('')}</div>
+    <label class="toggle"><input type="checkbox" id="sync-auto" data-act="syncAuto" ${sy.auto?'checked':''}><span>Her değişiklikte otomatik gönder</span></label>
+    <div class="btns"><button class="btn pri" data-act="syncNow">${IC.sync.replace('<svg','<svg width="16" height="16" style="vertical-align:-3px;margin-right:6px"')}Şimdi senkronize et</button><button class="btn" data-act="copyPack">Paketi kopyala</button></div>
+    <div class="small muted">${sy.last?`Son gönderim: ${new Date(sy.last).toLocaleString('tr-TR')}`:'Henüz gönderilmedi.'}</div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <h3>Hatırlatıcılar</h3>
+    <div class="grid2" style="grid-template-columns:repeat(3,1fr)">${PARTS.map(([k,l])=>`<label class="f">${l}<input class="inp" type="time" id="set-part-${k}" data-act="setPart" data-k="${k}" value="${(st.partTimes||{})[k]||''}"></label>`).join('')}</div>
+    <div class="grid2"><label class="f">Gün sonu saati<input class="inp" type="time" id="set-eod" data-act="setEod" value="${st.eodTime}"></label>
+    <label class="f">Görevden kaç dk önce<input class="inp" type="number" min="0" max="120" id="set-lead" data-act="setLead" value="${st.taskLead}"></label></div>
+    <div class="grid2"><label class="f">Hafta sonu hatırlatma günü<select class="inp" id="set-eowd" data-act="setEowDay">${DAYS_L.map((x,i)=>`<option value="${i}" ${+st.eowDay===i?'selected':''}>${x}</option>`).join('')}</select></label>
+    <label class="f">Saati<input class="inp" type="time" id="set-eowt" data-act="setEowTime" value="${st.eowTime}"></label></div>
+    <p class="small muted" style="margin:0">Hatırlatmalar uygulama açıkken ya da arka planda yeni kapatılmışken gelir; uygulama tamamen kapalıyken gönderilemez. Bildirim izni (şu an: ${notif==='granted'?'açık':notif==='denied'?'engelli':notif==='yok'?'desteklenmiyor':'izin bekliyor'}).</p>
+    <div class="btns"><button class="btn" data-act="askNotif">Bildirim izni iste</button><button class="btn" data-act="testRemind">Deneme hatırlatması</button></div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <h3>Uygulamayı yükle</h3>
+    ${isStandalone()?'<p class="small muted" style="margin:0">Halka bu cihazda uygulama olarak yüklü.</p>':`<p class="small muted" style="margin:0">Android ve bilgisayarda aşağıdaki düğmeyle yükleyebilirsin. iPhone ve iPad'de Safari'de Paylaş düğmesine, sonra “Ana Ekrana Ekle”ye dokun.</p>${INSTALL?'<div class="btns"><button class="btn gold" data-act="installApp">Uygulamayı yükle</button></div>':''}`}
+    <p class="small muted" style="margin:0">Hızlı görev için uygulama simgesine basılı tut ve “Hızlı görev”i seç (Android). Her cihazda <span class="mono">mdmelikeyilmaz.github.io/halka/?ekle</span> adresi de doğrudan hızlı görev ekranını açar.</p>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <h3>Veri</h3>
+    <div class="small"><span class="dot ${MODE==='db'?'on':''}"></span>${MODE==='db'?`${esc(USER?.email||'')} hesabında saklanıyor; telefon, tablet ve bilgisayarda aynı.`:'Giriş yapılmadı; veriler yalnızca bu cihazda.'}</div>
+    <div class="btns">${MODE==='db'?'<button class="btn" data-act="signOut">Çıkış yap</button>':'<button class="btn pri" data-act="signIn">Giriş yap</button>'}</div>
+    <div class="btns"><button class="btn" data-act="exportData">Yedeği kopyala</button><button class="btn" data-act="importData">Yedekten geri yükle</button></div>
+  </div>`;
+}
+function buildPack(){
+  const c=S.settings.sync.cats,p={app:'halka-planlayici',version:1,at:new Date().toISOString()};
+  if(c.tasks)p.tasks=tasksArr().map(t=>({id:t.id,title:t.title,note:t.note||'',quad:t.quad||null,scope:t.scope,date:t.date||null,time:t.time||null,dur:t.dur||null,done:!!t.done,doneAt:t.doneAt||null}));
+  if(c.routines||c.logs||c.chains)p.routines=routinesArr().map(r=>{
+    const o={id:r.id,name:r.name};
+    if(c.routines)Object.assign(o,{type:r.type,typeLabel:RT[r.type].d(r),target:r.target||1,time:r.time||null,dur:r.dur||null,start:r.start,paused:!!r.paused});
+    if(c.logs)o.log=r.log||{};
+    if(c.chains){const ci=chainInfo(r);o.chain={current:ci.streak,best:ci.best,unit:PNAME[RT[r.type].p]}}
+    return o;
+  });
+  if(c.timers){const t0=today();p.plannedMinutes={day:plannedUntil(addD(t0,1)),week:plannedUntil(addD(monday(t0),7)),month:plannedUntil(new Date(t0.getFullYear(),t0.getMonth()+1,1)),year:plannedUntil(new Date(t0.getFullYear()+1,0,1))}}
+  return p;
+}
+let syncT=null;
+function scheduleSync(){clearTimeout(syncT);syncT=setTimeout(()=>doSync(true),3000)}
+async function doSync(silent){
+  const pack=buildPack();
+  S.settings.sync.last=pack.at;
+  if(MODE==='db'&&USER){const r=await sb.from('halka_items').upsert({user_id:USER.id,id:'sync_outbox',kind:'sync',data:pack,updated_at:pack.at});if(r.error){toast('Senkron kutusuna yazılamadı');return}}
+  else ls.set('halka-sync-outbox',pack);
+  persist('s');
+  if(!silent){toast('Seçilen veriler senkron kutusuna gönderildi');render()}
+}
+
+/* ============ sheets ============ */
+function openSheet(html,onMount){
+  const root=$('#sheets');
+  root.innerHTML=`<div class="scrim" data-act="closeScrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
+  onMount&&onMount(root.querySelector('.sheet'));
+}
+function closeSheet(){$('#sheets').innerHTML='';if(location.hash==='#ekle'||location.search)history.replaceState(null,'',location.pathname)}
+const shead=t=>`<div class="shead"><h2>${t}</h2><button class="iconbtn x" data-act="close" aria-label="Kapat">${IC.x}</button></div>`;
+
+/* quick add */
+let QA={quad:null,when:'today'};
+function openQuick(){
+  QA={quad:null,when:'today'};
+  openSheet(`<div style="display:flex;gap:8px;align-items:center">
+    <input class="inp big" id="qa-title" placeholder="Ne yapılacak?" autocomplete="off" enterkeyhint="send" style="flex:1;min-width:0">
+    <button class="btn pri" data-act="qaSave" style="padding:15px 18px">Gönder</button></div>`,s=>{
+      const i=s.querySelector('#qa-title');setTimeout(()=>i.focus(),60);
+      i.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();qaSave(false)}});
+    });
+}
+function qaSave(next){
+  const i=$('#qa-title');const title=i.value.trim();if(!title){i.focus();return}
+  const t0=today();let scope='day',date=dk(t0);
+  if(QA.when==='tomorrow')date=dk(addD(t0,1));
+  if(QA.when==='week'){scope='week';date=dk(monday(t0))}
+  if(QA.when==='month'){scope='month';date=dk(new Date(t0.getFullYear(),t0.getMonth(),1))}
+  if(QA.when==='none'){scope='none';date=null}
+  const t={id:uid(),title,quad:QA.quad,scope,date,time:null,dur:null,deduct:false,done:false,created:Date.now()};
+  S.tasks[t.id]=t;persist('t',t.id);render();
+  toast('Bugüne eklendi: '+title);
+  if(next){i.value='';i.focus()}else closeSheet();
+}
+
+/* task editor */
+let TE=null;
+function openTask(t,isNew){
+  TE=structuredClone(t);
+  const scopes=[['day','Gün'],['week','Hafta'],['month','Ay'],['year','Yıl'],['none','Tarihsiz']];
+  openSheet(`${shead(isNew?'Yeni görev':'Görevi düzenle')}
+    <label class="f">Görev<input class="inp" id="te-title" value="${esc(TE.title||'')}" placeholder="Görev adı"></label>
+    <div class="qpick">${Object.entries(QUADS).map(([k,q])=>`<button style="--qc:${q.c}" data-act="teQuad" data-k="${k}" aria-pressed="${TE.quad===k}">${q.l}<small>${q.h}</small></button>`).join('')}</div>
+    <div><div class="f" style="margin-bottom:6px;font-size:12.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Ne zaman</div>
+    <div class="chips" id="te-scope">${scopes.map(([k,l])=>`<button class="chip" data-act="teScope" data-k="${k}" aria-pressed="${TE.scope===k}">${l}</button>`).join('')}</div></div>
+    <div id="te-when"></div>
+    <div class="grid2" id="te-timegrid"><label class="f">Saat<input class="inp" type="time" id="te-time" value="${TE.time||''}"></label><label class="f">Süre (dk)<input class="inp" type="number" min="0" step="5" id="te-dur" value="${TE.dur||''}" placeholder="örn. 45"></label></div>
+    <label class="toggle"><input type="checkbox" id="te-deduct" ${TE.deduct?'checked':''}><span>Bu süreyi geri sayım sayaçlarından düş</span></label>
+    <label class="f">Not<textarea class="inp" id="te-note">${esc(TE.note||'')}</textarea></label>
+    <div class="btns"><button class="btn pri grow" data-act="teSave">Kaydet</button>${!isNew?`<button class="btn" data-act="tePostpone" data-n="1">Yarına</button><button class="btn" data-act="tePostpone" data-n="7">Haftaya</button><button class="btn danger" data-act="teDelete">Sil</button>`:''}</div>
+    <div id="te-confirm"></div>`,()=>{teWhen();if(isNew)setTimeout(()=>$('#te-title').focus(),60);if(TE._timed)setTimeout(()=>$('#te-time').focus(),80)});
+}
+function teWhen(){
+  const s=TE.scope,el=$('#te-when');if(!el)return;
+  const d=TE.date?pd(TE.date):today();
+  let h='';
+  if(s==='day')h=`<label class="f">Tarih<input class="inp" type="date" id="te-date" value="${dk(d)}"></label>`;
+  if(s==='week')h=`<label class="f">Haftanın herhangi bir günü<input class="inp" type="date" id="te-date" value="${dk(monday(d))}"></label><div class="small muted">${fmtDay(monday(d))} haftasına kaydedilir.</div>`;
+  if(s==='month')h=`<label class="f">Ay<input class="inp" type="month" id="te-date" value="${d.getFullYear()}-${pad(d.getMonth()+1)}"></label>`;
+  if(s==='year')h=`<label class="f">Yıl<input class="inp" type="number" id="te-date" min="2020" max="2100" value="${d.getFullYear()}"></label>`;
+  if(s==='none')h=`<div class="small muted">Gelen kutusunda bekler; istediğinde gün, hafta, ay ya da yıl atarsın.</div>`;
+  el.innerHTML=h;
+  $('#te-timegrid').hidden=s!=='day';
+}
+function teCollect(){
+  TE.title=$('#te-title').value.trim();
+  TE.note=$('#te-note').value;
+  const di=$('#te-date');
+  if(TE.scope==='none')TE.date=null;
+  else if(di){
+    const v=di.value;
+    if(TE.scope==='day')TE.date=v||dk(today());
+    if(TE.scope==='week')TE.date=dk(monday(v?pd(v):today()));
+    if(TE.scope==='month')TE.date=(v||dk(today()).slice(0,7))+'-01';
+    if(TE.scope==='year')TE.date=(v||today().getFullYear())+'-01-01';
+  }
+  if(TE.scope==='day'){TE.time=$('#te-time').value||null}else TE.time=null;
+  const du=Number($('#te-dur').value);TE.dur=du>0?du:null;
+  TE.deduct=$('#te-deduct').checked;
+}
+function teSave(){
+  teCollect();if(!TE.title){$('#te-title').focus();return}
+  delete TE._timed;
+  if(!TE.created)TE.created=Date.now();
+  S.tasks[TE.id]=TE;persist('t',TE.id);closeSheet();render();toast('Kaydedildi');
+}
+
+/* routine editor */
+let RE=null;
+function newRoutineObj(){return {id:uid(),name:'',color:COLORS[routinesArr().length%COLORS.length],type:'daily_count',target:1,days:[0,2,4],mdays:[1,15],every:2,ydates:[],start:dk(today()),time:null,dur:null,deduct:false,reminders:{times:[],eod:true,eow:false,days:[]},log:{},kept:[],broken:[],paused:false,created:Date.now()}}
+function openRoutine(r,isNew){
+  RE=structuredClone(r);RE.parts=RE.parts||[];RE.reminders=Object.assign({times:[],eod:false,eow:false,days:[]},RE.reminders||{});
+  openSheet(`${shead(isNew?'Yeni rutin':'Rutini düzenle')}
+    <label class="f">Rutin adı<input class="inp" id="re-name" value="${esc(RE.name)}" placeholder="örn. 20 dk İngilizce okuma"></label>
+    <div class="swatches">${COLORS.map(c=>`<button style="--c:${c}" data-act="reColor" data-c="${c}" aria-pressed="${RE.color===c}" aria-label="Renk"></button>`).join('')}</div>
+    <div class="typegrid" id="re-types">${Object.entries(RT).map(([k,t])=>`<button data-act="reType" data-k="${k}" aria-pressed="${RE.type===k}"><small>${t.g}</small>${t.l}</button>`).join('')}</div>
+    <div id="re-params"></div>
+    <div class="grid2"><label class="f">Saat (isteğe bağlı)<input class="inp" type="time" id="re-time" value="${RE.time||''}"></label><label class="f">Süre (dk)<input class="inp" type="number" min="0" step="5" id="re-dur" value="${RE.dur||''}"></label></div>
+    <div><div style="margin-bottom:6px;font-size:12.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Günün bölümü (isteğe bağlı)</div>
+    <div class="chips" id="re-parts">${PARTS.map(([k,l])=>`<button class="chip" data-act="rePart" data-k="${k}" aria-pressed="${(RE.parts||[]).includes(k)}">${l}</button>`).join('')}</div>
+    <div class="small muted" style="margin-top:6px">Seçince rutin günlük listede o bölümün altında görünür. “Günde birkaç kez” rutinlerinde her bölüm ayrı işaretlenir.</div></div>
+    <label class="toggle"><input type="checkbox" id="re-deduct" ${RE.deduct?'checked':''}><span>Süresini geri sayım sayaçlarından düş</span></label>
+    <div class="card" style="padding:12px;background:var(--surface2)">
+      <div style="display:flex;align-items:center;gap:8px;font-weight:700">${IC.bell.replace('<svg','<svg width="18" height="18"')} Hatırlatıcılar</div>
+      <div id="re-times" class="chips"></div>
+      <div class="btns"><input class="inp" type="time" id="re-newtime" style="width:auto;flex:1"><button class="btn" data-act="reAddTime">Saat ekle</button></div>
+      <label class="toggle"><input type="checkbox" id="re-rparts" ${RE.reminders.parts?'checked':''}><span>Seçtiğim bölümlerin saatinde hatırlat (Ayarlar'dan değişir)</span></label>
+      <label class="toggle"><input type="checkbox" id="re-eod"${RE.reminders.eod?'checked':''}><span>Gün sonunda yapılmadıysa hatırlat (${S.settings.eodTime})</span></label>
+      <label class="toggle"><input type="checkbox" id="re-eow" ${RE.reminders.eow?'checked':''}><span>Hafta sonunda hatırlat (${DAYS_L[S.settings.eowDay]} ${S.settings.eowTime})</span></label>
+      <div class="small muted">Saatli hatırlatmalar sadece şu günlerde olsun (boş = her uygun gün):</div>
+      <div class="wdpick">${DAYS.map((x,i)=>`<button data-act="reRemDay" data-i="${i}" aria-pressed="${RE.reminders.days.includes(i)}">${x}</button>`).join('')}</div>
+    </div>
+    <label class="f">Başlangıç<input class="inp" type="date" id="re-start" value="${RE.start}"></label>
+    ${!isNew?`<label class="toggle"><input type="checkbox" id="re-paused" ${RE.paused?'checked':''}><span>Rutini durdur (zincir beklemede kalır)</span></label>`:''}
+    <div class="btns"><button class="btn pri grow" data-act="reSave">Kaydet</button>${!isNew?`<button class="btn danger" data-act="reDelete">Sil</button>`:''}</div>
+    <div id="re-confirm"></div>`,()=>{reParams();reTimes();if(isNew)setTimeout(()=>$('#re-name').focus(),60)});
+}
+function reParams(){
+  const el=$('#re-params');if(!el)return;const t=RE.type;let h='';
+  if(['daily_count','weekly_count','monthly_count','yearly_count'].includes(t))h=`<label class="f">Kaç kez<input class="inp" type="number" min="1" id="re-target" value="${RE.target||1}"></label>`;
+  if(t==='daily_duration')h=`<label class="f">Günlük hedef (dk)<input class="inp" type="number" min="5" step="5" id="re-target" value="${RE.target>1?RE.target:30}"></label>`;
+  if(t==='every_n_days')h=`<label class="f">Kaç günde bir<input class="inp" type="number" min="2" id="re-every" value="${RE.every||2}"></label>`;
+  if(t==='weekly_days')h=`<div class="wdpick">${DAYS.map((x,i)=>`<button data-act="reDay" data-i="${i}" aria-pressed="${RE.days.includes(i)}">${x}</button>`).join('')}</div>`;
+  if(t==='monthly_days')h=`<div class="small muted">Ayın günleri</div><div class="mdpick">${Array.from({length:31},(_,i)=>`<button data-act="reMDay" data-i="${i+1}" aria-pressed="${RE.mdays.includes(i+1)}">${i+1}</button>`).join('')}</div>`;
+  if(t==='yearly_dates')h=`<div class="chips">${RE.ydates.map(x=>`<button class="chip" data-act="reDelY" data-v="${x}">${fmtMD(x)} ✕</button>`).join('')||'<span class="small muted">Tarih ekle</span>'}</div><div class="btns"><input class="inp" type="date" id="re-ydate" style="width:auto;flex:1"><button class="btn" data-act="reAddY">Tarih ekle</button></div>`;
+  el.innerHTML=h;
+}
+function reTimes(){const el=$('#re-times');if(el)el.innerHTML=RE.reminders.times.map(x=>`<button class="chip" data-act="reDelTime" data-v="${x}">${x} ✕</button>`).join('')||'<span class="small muted">Saatli hatırlatma yok</span>'}
+function reCollect(){
+  RE.name=$('#re-name').value.trim();
+  const tg=$('#re-target');if(tg)RE.target=Math.max(1,Number(tg.value)||1);
+  if(!['daily_count','weekly_count','monthly_count','yearly_count','daily_duration'].includes(RE.type))RE.target=1;
+  const ev=$('#re-every');if(ev)RE.every=Math.max(2,Number(ev.value)||2);
+  RE.time=$('#re-time').value||null;
+  const du=Number($('#re-dur').value);RE.dur=du>0?du:null;
+  RE.deduct=$('#re-deduct').checked;
+  RE.reminders.parts=$('#re-rparts').checked;
+  RE.reminders.eod=$('#re-eod').checked;RE.reminders.eow=$('#re-eow').checked;
+  RE.start=$('#re-start').value||dk(today());
+  const pz=$('#re-paused');if(pz)RE.paused=pz.checked;
+}
+function reSave(){
+  reCollect();if(!RE.name){$('#re-name').focus();return}
+  if(RE.type==='weekly_days'&&!RE.days.length){toast('En az bir gün seç');return}
+  if(RE.type==='monthly_days'&&!RE.mdays.length){toast('Ayın en az bir gününü seç');return}
+  if(RE.type==='yearly_dates'&&!RE.ydates.length){toast('En az bir tarih ekle');return}
+  S.routines[RE.id]=RE;persist('r',RE.id);closeSheet();render();toast('Rutin kaydedildi');
+}
+
+/* routine detail */
+function openRoutineDetail(r){
+  const ci=chainInfo(r),p=RT[r.type].p,t0=today();
+  const last=[];for(let i=0;i<14;i++){const d=addD(t0,-i),k=dk(d);last.push({d,k,v:(r.log||{})[k]||0})}
+  openSheet(`${shead(esc(r.name))}
+    <div class="small muted">${RT[r.type].d(r)} · ${dk(pd(r.start))===dk(t0)?'bugün başladı':fmtDay(pd(r.start))+' tarihinden beri'}</div>
+    <div class="streak"><b>${ci.streak}</b><span class="muted">${PNAME[p]} zincir · en uzun ${ci.best}</span></div>
+    ${chainSvg(ci.recent,r.color)}
+    <div class="card" style="padding:12px;background:var(--surface2)">
+      <div style="font-weight:700">Son 14 gün</div>
+      <div class="list">${last.map(x=>`<div class="mini"><span class="t">${fmtDay(x.d)} <span class="muted small">${DAYS[wdi(x.d)]}</span></span><span class="mono">${x.v}${r.type==='daily_duration'?' dk':''}</span><button class="iconbtn" style="width:30px;height:30px" data-act="logAdj" data-id="${r.id}" data-k="${x.k}" data-n="-1" aria-label="Azalt">−</button><button class="iconbtn" style="width:30px;height:30px" data-act="logAdj" data-id="${r.id}" data-k="${x.k}" data-n="1" aria-label="Artır">+</button></div>`).join('')}</div>
+    </div>
+    <div class="btns"><button class="btn pri grow" data-act="editRoutine" data-id="${r.id}">Düzenle</button>${ci.pending.length?`<button class="btn gold" data-act="openChains">${ci.pending.length} bekleyen dönem</button>`:''}</div>`);
+}
+
+/* duration log sheet */
+function openDurLog(r,k){
+  const v=routineDayVal(r,k);
+  openSheet(`${shead(esc(r.name))}
+    <div class="sub">${fmtDay(pd(k))}: ${v}/${target(r)} dk</div>
+    <div class="chips">${[5,10,15,20,30,45,60].map(m=>`<button class="chip" data-act="durAdd" data-id="${r.id}" data-k="${k}" data-n="${m}">+${m} dk</button>`).join('')}</div>
+    <div class="btns"><input class="inp" type="number" id="dur-custom" placeholder="dk" style="width:auto;flex:1"><button class="btn pri" data-act="durAddCustom" data-id="${r.id}" data-k="${k}">Ekle</button></div>
+    ${v?`<button class="btn danger" data-act="durReset" data-id="${r.id}" data-k="${k}">Bu günü sıfırla</button>`:''}`);
+}
+
+/* overdue tasks */
+function openOverdue(){
+  const od=sortTasks(overdueTasks());
+  if(!od.length){closeSheet();render();return}
+  openSheet(`${shead('Zamanında yapılmayanlar')}
+    <div class="small muted">Hiçbir görev sen onaylamadan taşınmaz. Her biri için karar ver.</div>
+    ${od.length>1?`<button class="btn" data-act="odAll">Hepsini bugüne al</button>`:''}
+    ${od.map(t=>`<div class="pend"><div style="font-weight:700">${esc(t.title)}</div><div class="small muted">${t.scope==='day'?fmtDay(pd(t.date)):t.scope==='week'?fmtDay(pd(t.date))+' haftası':t.scope==='month'?MON[pd(t.date).getMonth()]:t.date.slice(0,4)}${t.quad?' · '+QUADS[t.quad].l:''}</div>
+      <div class="btns"><button class="btn" data-act="odMove" data-id="${t.id}" data-n="0">Bugüne</button><button class="btn" data-act="odMove" data-id="${t.id}" data-n="1">Yarına</button><input class="inp" type="date" id="od-${t.id}" style="width:auto;padding:7px"><button class="btn" data-act="odPick" data-id="${t.id}">Bu tarihe</button><button class="btn" data-act="odDone" data-id="${t.id}">Yapılmıştı</button><button class="btn danger" data-act="odDel" data-id="${t.id}">Sil</button></div></div>`).join('')}`);
+}
+function moveTask(t,dateKey){t.scope='day';t.date=dateKey;t.postponed=(t.postponed||0)+1;persist('t',t.id)}
+
+/* chain check */
+function openChains(){
+  const pc=pendingChains();
+  if(!pc.length){closeSheet();render();return}
+  openSheet(`${shead('Zincir kontrolü')}
+    <div class="small muted">Bu dönemlerde işaret yok. Zincir yalnızca sen “Zinciri kır” dersen kırılır.</div>
+    ${pc.slice(0,40).map(({r,k})=>`<div class="pend" style="border-left:4px solid ${r.color}"><div style="font-weight:700">${esc(r.name)}</div><div class="small muted">${periodLabel(r,k)} · hedef ${target(r)}${r.type==='daily_duration'?' dk':''}</div>
+      <div class="btns"><button class="btn" data-act="chDone" data-id="${r.id}" data-k="${k}">Yapmıştım</button><button class="btn" data-act="chKeep" data-id="${r.id}" data-k="${k}">Mazeretli, zincir korunsun</button><button class="btn danger" data-act="chBreak" data-id="${r.id}" data-k="${k}">Zinciri kır</button></div></div>`).join('')}
+    ${pc.length>1?`<div class="btns"><button class="btn danger" data-act="chBreakAll">Hepsinde zinciri kır</button></div>`:''}`);
+}
+
+/* clock info */
+function openClockInfo(k){
+  const t0=today(),now=new Date();
+  const ends={gun:addD(t0,1),hafta:addD(monday(t0),7),ay:new Date(t0.getFullYear(),t0.getMonth()+1,1),yil:new Date(t0.getFullYear()+1,0,1)};
+  const names={gun:'Gün',hafta:'Hafta',ay:'Ay',yil:'Yıl'};
+  const left=(ends[k]-now)/6e4,pl=plannedUntil(ends[k]);
+  openSheet(`${shead(names[k]+' sayacı')}
+    <div class="grid2"><div class="card" style="padding:12px"><div class="small muted">Kalan zaman</div><div class="mono" style="font-size:20px;font-weight:600">${fmtDur(left)}</div></div>
+    <div class="card" style="padding:12px"><div class="small muted">Planlı (düşülen)</div><div class="mono" style="font-size:20px;font-weight:600">${fmtDur(pl)}</div></div></div>
+    <div class="card" style="padding:12px;background:var(--teal-soft)"><div class="small">Boş kalan</div><div class="mono" style="font-size:24px;font-weight:600">${fmtDur(Math.max(0,left-pl))}</div></div>
+    <p class="small muted" style="margin:0">Sadece “sayaçtan düş” seçili, süre verilmiş ve henüz tamamlanmamış görev ve rutinler düşülür. Aynı saatlere denk gelen işler çakışan kısım bir kez sayılarak düşülür. Geçmiş saatler hesaba katılmaz.</p>`);
+}
+
+/* confirm in page */
+function confirmIn(sel,text,act,id){$(sel).innerHTML=`<div class="pend"><div style="font-weight:700">${text}</div><div class="btns"><button class="btn danger" data-act="${act}" data-id="${id||''}">Evet, sil</button><button class="btn" data-act="cancelConfirm" data-sel="${sel}">Vazgeç</button></div></div>`}
+
+/* ============ actions ============ */
+function markRoutine(r,k,btn){
+  const d=pd(k);if(d>today())return;
+  if(r.type==='daily_duration'){openDurLog(r,k);return}
+  const T=target(r),before=routinePeriodVal(r,d);
+  r.log=r.log||{};
+  const slot=btn?.dataset.slot;
+  if(slot!=null&&slot!==''&&(r.log[k]||0)>+slot){
+    r.log[k]--;if(!r.log[k])delete r.log[k];persist('r',r.id);render();toast('İşaret geri alındı');return;
+  }
+  if(before>=T&&(RT[r.type].p==='day'||routineDayVal(r,k)>0)&&T===1){
+    r.log[k]=Math.max(0,(r.log[k]||0)-1);if(!r.log[k])delete r.log[k];
+    persist('r',r.id);render();toast('İşaret geri alındı');return;
+  }
+  if(before>=T&&T>1){
+    if(routineDayVal(r,k)>0){r.log[k]--;if(!r.log[k])delete r.log[k];persist('r',r.id);render();toast('Bir işaret geri alındı');return}
+    return;
+  }
+  r.log[k]=(r.log[k]||0)+1;
+  r.broken=(r.broken||[]).filter(x=>x!==pkey(r,d));
+  persist('r',r.id);
+  const after=routinePeriodVal(r,d);
+  celebrate(btn,r,after>=T);
+  render();
+}
+function addDur(r,k,m){r.log=r.log||{};const before=r.log[k]||0;r.log[k]=Math.max(0,before+m);if(!r.log[k])delete r.log[k];persist('r',r.id);if(before<target(r)&&(r.log[k]||0)>=target(r))celebrate(null,r,true);render()}
+function celebrate(btn,r,complete){
+  if(btn){const s=btn.querySelector('svg');s&&s.classList.add('clink')}
+  if(complete){
+    const ci=chainInfo(r);
+    toast(`Halka eklendi · ${r.name}: ${ci.streak} ${PNAME[RT[r.type].p]} zincir`);
+    const rect=btn?btn.getBoundingClientRect():{left:innerWidth/2,top:innerHeight/2,width:0,height:0};
+    burst(rect.left+rect.width/2,rect.top+rect.height/2,r.color,ci.streak);
+  }
+}
+function toggleTask(t,btn){
+  t.done=!t.done;t.doneAt=t.done?Date.now():null;persist('t',t.id);
+  if(t.done){btn&&btn.classList.add('on');const rc=btn?.getBoundingClientRect();if(rc)burst(rc.left+rc.width/2,rc.top+rc.height/2,getComputedStyle(btn).getPropertyValue('--qc')||'#2B67CF',3)}
+  setTimeout(render,t.done?220:0);
+  toast(t.done?'Tamamlandı':'Tekrar açıldı',t.done?()=>{t.done=false;t.doneAt=null;persist('t',t.id);render()}:null);
+}
+function seedExamples(){
+  const mk=o=>{const r=Object.assign(newRoutineObj(),o);S.routines[r.id]=r;persist('r',r.id)};
+  mk({name:'Su iç (örnek)',type:'daily_count',target:6,color:COLORS[2],reminders:{times:['11:00','15:00','19:00'],eod:true,eow:false,days:[]}});
+  mk({name:'Makale oku (örnek)',type:'daily_duration',target:30,color:COLORS[1],dur:30,deduct:true,time:'21:00',reminders:{times:[],eod:true,eow:false,days:[]}});
+  mk({name:'Spor (örnek)',type:'weekly_count',target:3,color:COLORS[3],dur:45,reminders:{times:[],eod:false,eow:true,days:[]}});
+  mk({name:'Faturaları kontrol et (örnek)',type:'monthly_days',mdays:[5],color:COLORS[4],reminders:{times:['10:00'],eod:false,eow:false,days:[]}});
+  render();toast('Örnek rutinler eklendi. İstediğin zaman düzenleyip silebilirsin.');
+}
+
+document.addEventListener('click',e=>{
+  const tab=e.target.closest('[data-tab]');if(tab){setTab(tab.dataset.tab);return}
+  if(e.target.closest('#fab')){openQuick();return}
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const a=el.dataset.act,id=el.dataset.id;
+  if(a==='closeScrim'){if(e.target===el)closeSheet();return}
+  const R=id&&S.routines[id],T=id&&S.tasks[id];
+  switch(a){
+    case 'close':closeSheet();break;
+    case 'dayNav':UI.day=dk(addD(pd(UI.day),+el.dataset.n));render();break;
+    case 'goToday':UI.day=dk(today());render();break;
+    case 'openDay':UI.day=el.dataset.k;setTab('today');break;
+    case 'toggleShowR':S.settings.showRoutines=!S.settings.showRoutines;persist('s');render();break;
+    case 'toggleTask':if(T)toggleTask(T,el);break;
+    case 'editTask':if(T)openTask(T,false);break;
+    case 'newTask':{const t={id:uid(),title:'',quad:el.dataset.quad||null,scope:el.dataset.scope||'day',date:el.dataset.date||dk(today()),time:null,dur:null,deduct:false,done:false,_timed:!!el.dataset.timed};openTask(t,true);break}
+    case 'markRoutine':if(R)markRoutine(R,el.dataset.k,el);break;
+    case 'routineDetail':if(R)openRoutineDetail(R);break;
+    case 'editRoutine':if(R)openRoutine(R,false);break;
+    case 'newRoutine':openRoutine(newRoutineObj(),true);break;
+    case 'seedExamples':seedExamples();break;
+    case 'planMode':UI.planMode=el.dataset.m;render();break;
+    case 'planNav':{const d=pd(UI.planAnchor),n=+el.dataset.n;UI.planAnchor=dk(UI.planMode==='week'?addD(d,7*n):UI.planMode==='month'?new Date(d.getFullYear(),d.getMonth()+n,1):new Date(d.getFullYear()+n,0,1));if(UI.planMode==='month')UI.selDay=UI.planAnchor;render();break}
+    case 'planToday':UI.planAnchor=dk(today());UI.selDay=dk(today());render();break;
+    case 'selDay':UI.selDay=el.dataset.k;render();break;
+    case 'openMonth':UI.planMode='month';UI.planAnchor=el.dataset.k;UI.selDay=el.dataset.k;render();break;
+    case 'mx':UI.mxFilter=el.dataset.f;render();break;
+    case 'clockinfo':openClockInfo(el.dataset.k);break;
+    /* quick add */
+    case 'qaWhen':QA.when=el.dataset.k;document.querySelectorAll('#qa-when .chip').forEach(b=>b.setAttribute('aria-pressed',b===el));break;
+    case 'qaQuad':QA.quad=QA.quad===el.dataset.k?null:el.dataset.k;document.querySelectorAll('#qa-quad button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===QA.quad));break;
+    case 'qaSave':qaSave(false);break;
+    case 'qaSaveNext':qaSave(true);break;
+    /* task editor */
+    case 'teQuad':TE.quad=TE.quad===el.dataset.k?null:el.dataset.k;el.parentElement.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===TE.quad));break;
+    case 'teScope':{const prev=$('#te-date')?.value;TE.scope=el.dataset.k;if(prev&&/^\d{4}-\d{2}-\d{2}$/.test(prev))TE.date=prev;document.querySelectorAll('#te-scope .chip').forEach(b=>b.setAttribute('aria-pressed',b===el));teWhen();break}
+    case 'teSave':teSave();break;
+    case 'tePostpone':{teCollect();const base=TE.scope==='day'&&TE.date?pd(TE.date):today();TE.scope='day';TE.date=dk(addD(base<today()?today():base,+el.dataset.n));TE.postponed=(TE.postponed||0)+1;S.tasks[TE.id]=TE;persist('t',TE.id);closeSheet();render();toast(`${fmtDay(pd(TE.date))} tarihine ertelendi`);break}
+    case 'teDelete':confirmIn('#te-confirm','Bu görev silinsin mi?','teDeleteYes',TE.id);break;
+    case 'teDeleteYes':delete S.tasks[id];persist('t',id);closeSheet();render();toast('Görev silindi');break;
+    case 'cancelConfirm':$(el.dataset.sel).innerHTML='';break;
+    /* routine editor */
+    case 'reColor':RE.color=el.dataset.c;el.parentElement.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b===el));break;
+    case 'reType':{const tg=$('#re-target');if(tg)RE.target=Number(tg.value)||1;RE.type=el.dataset.k;if(RE.type==='daily_duration'&&RE.target<5)RE.target=30;document.querySelectorAll('#re-types button').forEach(b=>b.setAttribute('aria-pressed',b===el));reParams();break}
+    case 'reDay':{const i=+el.dataset.i;RE.days=RE.days.includes(i)?RE.days.filter(x=>x!==i):[...RE.days,i].sort();el.setAttribute('aria-pressed',RE.days.includes(i));break}
+    case 'reMDay':{const i=+el.dataset.i;RE.mdays=RE.mdays.includes(i)?RE.mdays.filter(x=>x!==i):[...RE.mdays,i].sort((a,b)=>a-b);el.setAttribute('aria-pressed',RE.mdays.includes(i));break}
+    case 'reAddY':{const v=$('#re-ydate').value;if(v){const md=v.slice(5);if(!RE.ydates.includes(md))RE.ydates.push(md);RE.ydates.sort();reParams()}break}
+    case 'reDelY':RE.ydates=RE.ydates.filter(x=>x!==el.dataset.v);reParams();break;
+    case 'reAddTime':{const v=$('#re-newtime').value;if(v&&!RE.reminders.times.includes(v)){RE.reminders.times.push(v);RE.reminders.times.sort();reTimes()}break}
+    case 'reDelTime':RE.reminders.times=RE.reminders.times.filter(x=>x!==el.dataset.v);reTimes();break;
+    case 'rePart':{const k=el.dataset.k;RE.parts=RE.parts.includes(k)?RE.parts.filter(x=>x!==k):[...RE.parts,k];el.setAttribute('aria-pressed',RE.parts.includes(k));break}
+    case 'reRemDay':{const i=+el.dataset.i,ds=RE.reminders.days;RE.reminders.days=ds.includes(i)?ds.filter(x=>x!==i):[...ds,i];el.setAttribute('aria-pressed',RE.reminders.days.includes(i));break}
+    case 'reSave':reSave();break;
+    case 'reDelete':confirmIn('#re-confirm','Rutin ve tüm zincir geçmişi silinsin mi?','reDeleteYes',RE.id);break;
+    case 'reDeleteYes':delete S.routines[id];persist('r',id);closeSheet();render();toast('Rutin silindi');break;
+    /* logs */
+    case 'logAdj':if(R){const k=el.dataset.k,n=+el.dataset.n*(R.type==='daily_duration'?5:1);R.log=R.log||{};R.log[k]=Math.max(0,(R.log[k]||0)+n);if(!R.log[k])delete R.log[k];persist('r',R.id);openRoutineDetail(R);render()}break;
+    case 'durAdd':if(R){addDur(R,el.dataset.k,+el.dataset.n);openDurLog(R,el.dataset.k)}break;
+    case 'durAddCustom':if(R){const v=Number($('#dur-custom').value);if(v)addDur(R,el.dataset.k,v);openDurLog(R,el.dataset.k)}break;
+    case 'durReset':if(R){delete R.log[el.dataset.k];persist('r',R.id);render();openDurLog(R,el.dataset.k)}break;
+    /* overdue */
+    case 'openOverdue':openOverdue();break;
+    case 'odMove':if(T){moveTask(T,dk(addD(today(),+el.dataset.n)));render();openOverdue()}break;
+    case 'odPick':if(T){const v=$('#od-'+id).value;if(!v){toast('Önce tarih seç');break}moveTask(T,v);render();openOverdue()}break;
+    case 'odDone':if(T){T.done=true;T.doneAt=Date.now();persist('t',T.id);render();openOverdue()}break;
+    case 'odDel':if(T){delete S.tasks[id];persist('t',id);render();openOverdue()}break;
+    case 'odAll':for(const t of overdueTasks())moveTask(t,dk(today()));render();openOverdue();toast('Hepsi bugüne alındı');break;
+    /* chains */
+    case 'openChains':openChains();break;
+    case 'chDone':if(R){const k=el.dataset.k;const dkey=k[0]==='W'||k[0]==='M'||k[0]==='Y'?null:k;if(dkey){R.log=R.log||{};R.log[dkey]=Math.max(R.log[dkey]||0,target(R))}else{R.kept=[...(R.kept||[]),k]}persist('r',R.id);render();openChains()}break;
+    case 'chKeep':if(R){R.kept=[...(R.kept||[]),el.dataset.k];persist('r',R.id);render();openChains()}break;
+    case 'chBreak':if(R){R.broken=[...(R.broken||[]),el.dataset.k];persist('r',R.id);render();openChains()}break;
+    case 'chBreakAll':for(const {r,k} of pendingChains()){r.broken=[...(r.broken||[]),k];persist('r',r.id)}render();openChains();break;
+    /* settings */
+    case 'syncNow':doSync(false);break;
+    case 'copyPack':copyText(JSON.stringify(buildPack(),null,1),'Senkron paketi panoya kopyalandı');break;
+    case 'exportData':copyText(JSON.stringify(S),'Yedek panoya kopyalandı. Güvenli bir yere yapıştır.');break;
+    case 'importData':openSheet(`${shead('Yedekten geri yükle')}<textarea class="inp code" id="imp" placeholder="Yedek metnini buraya yapıştır"></textarea><div class="small muted">Mevcut veriler yedekteki görev ve rutinlerle birleştirilir; aynı olanların yerine yedektekiler geçer.</div><button class="btn pri" data-act="importDo">Geri yükle</button>`);break;
+    case 'importDo':try{const v=JSON.parse($('#imp').value);for(const [k,t] of Object.entries(v.tasks||{})){S.tasks[k]=t;persist('t',k)}for(const [k,r] of Object.entries(v.routines||{})){S.routines[k]=r;persist('r',k)}closeSheet();render();toast('Yedek geri yüklendi')}catch(err){toast('Metin okunamadı. Yedeğin tamamını yapıştırdığından emin ol.')}break;
+    case 'askNotif':if('Notification' in window){Notification.requestPermission().then(p=>{render();toast(p==='granted'?'Bildirimler açık':'Bildirim izni verilmedi')}).catch(()=>toast('Bildirim izni alınamadı'))}else toast('Bu cihaz bildirimleri desteklemiyor. iPhone ve iPad\'de önce uygulamayı ana ekrana ekle.');break;
+    case 'authMode':showAuth(el.dataset.m);break;
+    case 'localMode':MODE='local';ls.set('halka-localmode',true);hideAuth();render();break;
+    case 'signIn':ls.set('halka-localmode',false);showAuth('in');break;
+    case 'signOut':sb.auth.signOut().then(()=>{S=emptyState();dirty.clear();ls.set('halka-owner',null);saveCache();ls.set('halka-localmode',false);MODE='auth';showAuth('in');render()});break;
+    case 'installApp':if(INSTALL){INSTALL.prompt();INSTALL.userChoice.finally(()=>{INSTALL=null;render()})}break;
+    case 'testRemind':remind('Deneme hatırlatması','Hatırlatmalar böyle görünecek.');break;
+  }
+});
+document.addEventListener('change',e=>{
+  const el=e.target,a=el.dataset.act;if(!a)return;
+  const st=S.settings;
+  if(a==='syncCat'){st.sync.cats[el.dataset.k]=el.checked;persist('s')}
+  if(a==='syncAuto'){st.sync.auto=el.checked;persist('s');if(el.checked)scheduleSync()}
+  if(a==='setPart'){st.partTimes=Object.assign({sabah:'08:00',ogle:'12:30',aksam:'19:00'},st.partTimes||{});st.partTimes[el.dataset.k]=el.value;persist('s')}
+  if(a==='setEod'){st.eodTime=el.value||'21:30';persist('s')}
+  if(a==='setLead'){st.taskLead=Math.max(0,Number(el.value)||0);persist('s')}
+  if(a==='setEowDay'){st.eowDay=+el.value;persist('s')}
+  if(a==='setEowTime'){st.eowTime=el.value||'20:00';persist('s')}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#sheets').innerHTML)closeSheet()});
+window.addEventListener('hashchange',()=>{if(location.hash==='#ekle')openQuick()});
+function copyText(s,msg){try{navigator.clipboard.writeText(s).then(()=>toast(msg),()=>showCopy(s))}catch(e){showCopy(s)}}
+function showCopy(s){openSheet(`${shead('Kopyala')}<textarea class="inp code" id="cp" readonly>${esc(s)}</textarea><div class="small muted">Metni seçip kopyala.</div>`,sh=>{const t=sh.querySelector('#cp');t.focus();t.select()})}
+
+/* ============ toast / fx ============ */
+function toast(msg,undo){
+  const el=document.createElement('div');el.className='toast';el.innerHTML=`<span>${esc(msg)}</span>${undo?'<button>Geri al</button>':''}`;
+  if(undo)el.querySelector('button').onclick=()=>{undo();el.remove()};
+  $('#toasts').appendChild(el);setTimeout(()=>el.remove(),undo?5000:3200);
+}
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const cv=$('#fx'),cx=cv.getContext('2d');let parts=[],raf=0;
+function burst(x,y,color,n){
+  if(RM)return;
+  cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio;cx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  const cols=[color.trim()||'#D99A0B',getComputedStyle(document.documentElement).getPropertyValue('--gold').trim(),getComputedStyle(document.documentElement).getPropertyValue('--teal').trim()];
+  const count=Math.min(70,18+n*3);
+  for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2,s=2+Math.random()*5;parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2.5,life:1,r:3+Math.random()*4,c:cols[i%3],ring:Math.random()<.4})}
+  if(!raf)raf=requestAnimationFrame(step);
+}
+function step(){
+  cx.clearRect(0,0,innerWidth,innerHeight);
+  parts=parts.filter(p=>p.life>0);
+  for(const p of parts){p.x+=p.vx;p.y+=p.vy;p.vy+=.18;p.vx*=.98;p.life-=.016;cx.globalAlpha=Math.max(0,p.life);
+    if(p.ring){cx.strokeStyle=p.c;cx.lineWidth=2.4;cx.beginPath();cx.ellipse(p.x,p.y,p.r*1.6,p.r,0,0,Math.PI*2);cx.stroke()}
+    else{cx.fillStyle=p.c;cx.fillRect(p.x,p.y,p.r,p.r)}}
+  cx.globalAlpha=1;
+  raf=parts.length?requestAnimationFrame(step):0;
+  if(!raf)cx.clearRect(0,0,innerWidth,innerHeight);
+}
+
+/* ============ reminders ============ */
+const fired=new Set(ls.get('halka-fired-'+dk(today()),[]));
+function remind(title,body){
+  toast(`${title}: ${body}`);
+  try{
+    if('Notification' in window&&Notification.permission==='granted'){
+      const opts={body,icon:'icon-192.png',badge:'icon-192.png',tag:title+body};
+      if(navigator.serviceWorker?.controller)navigator.serviceWorker.ready.then(r=>r.showNotification(title,opts)).catch(()=>new Notification(title,opts));
+      else new Notification(title,opts);
+    }
+  }catch(e){}
+}
+function checkReminders(){
+  const now=new Date(),k=dk(today()),hm=`${pad(now.getHours())}:${pad(now.getMinutes())}`,st=S.settings;
+  const fire=(key,title,body)=>{if(fired.has(key))return;fired.add(key);ls.set('halka-fired-'+k,[...fired]);remind(title,body)};
+  for(const r of routinesArr()){
+    if(r.paused)continue;
+    const p=RT[r.type].p,d=today();
+    if(pd(r.start)>d)continue;
+    if(p==='day'&&!dueOnDay(r,d))continue;
+    const met=routinePeriodVal(r,d)>=target(r);
+    if(met)continue;
+    const rm=r.reminders||{};
+    const dayOk=!rm.days||!rm.days.length||rm.days.includes(wdi(d));
+    for(const t of rm.times||[])if(dayOk&&t===hm)fire(`${r.id}|${k}|${t}`,r.name,'Zincire bir halka ekleme zamanı');
+    if(r.time&&dayOk&&!(rm.times||[]).length&&r.time===hm)fire(`${r.id}|${k}|own`,r.name,'Rutin saati geldi');
+    if(rm.parts&&dayOk){(r.parts||[]).forEach((pk,i)=>{const pt=(st.partTimes||{})[pk];if(pt===hm&&!(r.type==='daily_count'&&r.parts.length>1&&routineDayVal(r,k)>PARTS.map(x=>x[0]).filter(x=>r.parts.includes(x)).indexOf(pk)))fire(`${r.id}|${k}|${pk}`,r.name,partName(pk)+' rutini')})}
+    if(rm.eod&&hm===st.eodTime)fire(`${r.id}|${k}|eod`,r.name,'Bugün henüz işaretlenmedi');
+    if(rm.eow&&wdi(d)===+st.eowDay&&hm===st.eowTime)fire(`${r.id}|${k}|eow`,r.name,'Bu hafta hedefini tamamlamadın');
+  }
+  for(const t of tasksOnDay(k)){
+    if(t.done||!t.time)continue;
+    const at=toMin(t.time)-(+st.taskLead||0),cur=now.getHours()*60+now.getMinutes();
+    if(cur===at)fire(`t${t.id}|${k}`,t.title,st.taskLead?`${st.taskLead} dk sonra başlıyor (${t.time})`:'Başlama zamanı');
+  }
+}
+setInterval(checkReminders,15000);
+setInterval(()=>{if(UI.tab)renderClocks()},1000);
+let lastDay=dk(today());
+setInterval(()=>{const k=dk(today());if(k!==lastDay){if(UI.day===lastDay)UI.day=k;lastDay=k;render()}},30000);
+
+let INSTALL=null;
+const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALL=e;if(UI.tab==='settings')render()});
+window.addEventListener('appinstalled',()=>{INSTALL=null;toast('Halka yüklendi');render()});
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();checkReminders();if(MODE==='db'){flushAll();pull()}}});
+boot();
+</script>
+</body>
+</html>
