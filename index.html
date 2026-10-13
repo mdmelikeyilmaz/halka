@@ -706,6 +706,7 @@ function viewToday(){
     return rows?`<div class="sec"><h2>${pl} <span style="font-weight:500;letter-spacing:0;text-transform:none">· ${S.settings.partTimes?.[pk]||''}</span></h2></div><div class="list">${rows}</div>`:'';
   }).join('');
   let banners='';
+  if(!isStandalone()&&!ls.get('halka-hideinstall',false))banners+=`<div class="banner" style="background:var(--ink);color:var(--bg)"><img src="icon-192.png" alt="" style="width:36px;height:36px;border-radius:9px"><span>Halka'yı telefonuna uygulama olarak yükle. Adres çubuğu olmadan, kendi simgesiyle açılır.</span><button class="chip" data-act="installHelp">Yükle</button><button class="iconbtn" style="width:30px;height:30px;background:none;border:0;color:inherit" data-act="hideInstall" aria-label="Kapat">${IC.x}</button></div>`;
   if(isToday){
     const od=overdueTasks().length,pc=pendingChains().length;
     if(od)banners+=`<button class="banner" data-act="openOverdue">${IC.clock}<span>${od} görev zamanında yapılmadı. Ne yapalım?</span>${IC.right}</button>`;
@@ -1268,6 +1269,13 @@ document.addEventListener('click',e=>{
     case 'localMode':MODE='local';ls.set('halka-localmode',true);hideAuth();render();break;
     case 'signIn':ls.set('halka-localmode',false);showAuth('in');break;
     case 'signOut':sb.auth.signOut().then(()=>{S=emptyState();dirty.clear();ls.set('halka-owner',null);saveCache();ls.set('halka-localmode',false);MODE='auth';showAuth('in');render()});break;
+    case 'hideInstall':ls.set('halka-hideinstall',true);render();break;
+    case 'installHelp':{
+      if(INSTALL){INSTALL.prompt();INSTALL.userChoice.finally(()=>{INSTALL=null;render()});break}
+      const ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1),safari=/Safari/.test(ua)&&!/CriOS|FxiOS|EdgiOS/.test(ua),android=/Android/.test(ua);
+      const steps=ios?(safari?['Alttaki <b>Paylaş</b> düğmesine dokun (yukarı ok çıkan kare).','Listeyi kaydırıp <b>Ana Ekrana Ekle</b>\'yi seç.','Sağ üstte <b>Ekle</b> de.','Ana ekrandaki Halka simgesinden aç; artık adres çubuğu olmadan açılır.']:['iPhone\'da yükleme yalnızca <b>Safari</b>\'de çalışır.','Bu adresi Safari\'de aç: <span class="mono">mdmelikeyilmaz.github.io/halka</span>','Sonra Paylaş → <b>Ana Ekrana Ekle</b>.']):android?['Sağ üstteki <b>⋮</b> menüsüne dokun.','<b>Uygulamayı yükle</b> ya da <b>Ana ekrana ekle</b>\'yi seç.','<b>Yükle</b> de.','Uygulama çekmecesindeki Halka simgesinden aç.']:['Adres çubuğunun sağındaki <b>yükle</b> simgesine (ekran ve ok) tıkla.','Görünmüyorsa tarayıcı menüsünden <b>Uygulamayı yükle</b>\'yi seç.','Halka kendi penceresinde açılır.'];
+      openSheet(`${shead('Uygulama olarak yükle')}<ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;font-size:15.5px">${steps.map(s=>`<li>${s}</li>`).join('')}</ol><div class="small muted">Yükledikten sonra Halka telefonda ayrı bir uygulama gibi görünür ve çalışır.</div>`);
+      break}
     case 'installApp':if(INSTALL){INSTALL.prompt();INSTALL.userChoice.finally(()=>{INSTALL=null;render()})}break;
     case 'testRemind':remind('Deneme hatırlatması','Hatırlatmalar böyle görünecek.');break;
   }
