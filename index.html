@@ -531,7 +531,7 @@ async function boot(){
   if(!USER&&ls.get('halka-localmode',false))MODE='local';
   onUser();
   const q=new URLSearchParams(location.search);
-  if(location.hash==='#ekle'||q.has('ekle'))openQuick();
+  if(location.hash==='#ekle'||q.has('ekle')||(fresh&&ls.get('halka-startquick',true)!==false))openQuick();
 }
 
 /* ============ auth screen ============ */
@@ -943,6 +943,11 @@ function viewSettings(){
     <div class="btns"><button class="btn" data-act="askNotif">Bildirim izni iste</button><button class="btn" data-act="testRemind">Deneme hatırlatması</button></div>
   </div>
   <div class="card" style="margin-top:12px">
+    <h3>Açılış</h3>
+    <label class="toggle"><input type="checkbox" id="set-startquick" data-act="setStartQuick" ${ls.get('halka-startquick',true)!==false?'checked':''}><span>Uygulama açılınca hızlı görev ekranıyla başla</span></label>
+    <p class="small muted" style="margin:0">10 dakikadan uzun süre kapalı kalıp tekrar açtığında da bu ekran gelir. ✕ ile doğrudan uygulamaya geçersin.</p>
+  </div>
+  <div class="card" style="margin-top:12px">
     <h3>Uygulamayı yükle</h3>
     ${isStandalone()?'<p class="small muted" style="margin:0">Halka bu cihazda uygulama olarak yüklü.</p>':`<p class="small muted" style="margin:0">Android ve bilgisayarda aşağıdaki düğmeyle yükleyebilirsin. iPhone ve iPad'de Safari'de Paylaş düğmesine, sonra “Ana Ekrana Ekle”ye dokun.</p>${INSTALL?'<div class="btns"><button class="btn gold" data-act="installApp">Uygulamayı yükle</button></div>':''}`}
     <p class="small muted" style="margin:0">Hızlı görev için uygulama simgesine basılı tut ve “Hızlı görev”i seç (Android). Ana ekranda ayrı bir <b>Görev Ekle</b> simgesi istersen <a href="ekle/" style="color:inherit;font-weight:700">bu sayfayı</a> aç ve ana ekrana ekle; simge doğrudan yaz-gönder ekranını açar.</p>
@@ -1347,6 +1352,7 @@ document.addEventListener('change',e=>{
   if(a==='syncCat'){st.sync.cats[el.dataset.k]=el.checked;persist('s')}
   if(a==='syncAuto'){st.sync.auto=el.checked;persist('s');if(el.checked)scheduleSync()}
   if(a==='setPart'){st.partTimes=Object.assign({sabah:'08:00',ogle:'12:30',aksam:'19:00'},st.partTimes||{});st.partTimes[el.dataset.k]=el.value;persist('s')}
+  if(a==='setStartQuick'){ls.set('halka-startquick',el.checked)}
   if(a==='setEod'){st.eodTime=el.value||'21:30';persist('s')}
   if(a==='setLead'){st.taskLead=Math.max(0,Number(el.value)||0);persist('s')}
   if(a==='setEowDay'){st.eowDay=+el.value;persist('s')}
@@ -1430,7 +1436,8 @@ const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigat
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALL=e;if(UI.tab==='settings')render()});
 window.addEventListener('appinstalled',()=>{INSTALL=null;toast('Halka yüklendi');render()});
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){render();checkReminders();if(MODE==='db'){flushAll();pull()}}});
+let HIDDEN_AT=0;
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){HIDDEN_AT=Date.now();return}if(document.visibilityState==='visible'){if(HIDDEN_AT&&Date.now()-HIDDEN_AT>10*60000&&ls.get('halka-startquick',true)!==false&&$('#quick').hidden&&$('#auth').hidden&&!$('#sheets').innerHTML)openQuick();HIDDEN_AT=0;render();checkReminders();if(MODE==='db'){flushAll();pull()}}});
 boot();
 </script>
 </body>
