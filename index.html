@@ -291,6 +291,7 @@ textarea.inp{min-height:64px;resize:vertical}
 <div class="quick" id="quick" hidden></div>
 <script src="supabase.js"></script>
 <script>
+const APP_VERSION='1.6';
 /* ============ utilities ============ */
 const pad=n=>String(n).padStart(2,'0');
 const dk=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -531,7 +532,7 @@ async function boot(){
   if(!USER&&ls.get('halka-localmode',false))MODE='local';
   onUser();
   const q=new URLSearchParams(location.search);
-  if(location.hash==='#ekle'||q.has('ekle')||(fresh&&ls.get('halka-startquick',true)!==false))openQuick();
+  if(location.hash==='#ekle'||q.has('ekle')||ls.get('halka-startquick',true)!==false)openQuick();
 }
 
 /* ============ auth screen ============ */
@@ -944,8 +945,9 @@ function viewSettings(){
   </div>
   <div class="card" style="margin-top:12px">
     <h3>Açılış</h3>
+    <div class="small muted">Sürüm ${APP_VERSION}</div>
     <label class="toggle"><input type="checkbox" id="set-startquick" data-act="setStartQuick" ${ls.get('halka-startquick',true)!==false?'checked':''}><span>Uygulama açılınca hızlı görev ekranıyla başla</span></label>
-    <p class="small muted" style="margin:0">10 dakikadan uzun süre kapalı kalıp tekrar açtığında da bu ekran gelir. ✕ ile doğrudan uygulamaya geçersin.</p>
+    <p class="small muted" style="margin:0">Uygulamayı her açtığında ve 5 dakikadan uzun süre arka planda kalıp döndüğünde bu ekran gelir. ✕ ile doğrudan uygulamaya geçersin.</p>
   </div>
   <div class="card" style="margin-top:12px">
     <h3>Uygulamayı yükle</h3>
@@ -1435,9 +1437,13 @@ let INSTALL=null;
 const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALL=e;if(UI.tab==='settings')render()});
 window.addEventListener('appinstalled',()=>{INSTALL=null;toast('Halka yüklendi');render()});
-if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+if('serviceWorker' in navigator){
+  const hadCtrl=!!navigator.serviceWorker.controller;let reloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadCtrl&&!reloaded){reloaded=true;location.reload()}});
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}));
+}
 let HIDDEN_AT=0;
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){HIDDEN_AT=Date.now();return}if(document.visibilityState==='visible'){if(HIDDEN_AT&&Date.now()-HIDDEN_AT>10*60000&&ls.get('halka-startquick',true)!==false&&$('#quick').hidden&&$('#auth').hidden&&!$('#sheets').innerHTML)openQuick();HIDDEN_AT=0;render();checkReminders();if(MODE==='db'){flushAll();pull()}}});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){HIDDEN_AT=Date.now();return}if(document.visibilityState==='visible'){if(HIDDEN_AT&&Date.now()-HIDDEN_AT>5*60000&&ls.get('halka-startquick',true)!==false&&$('#quick').hidden&&$('#auth').hidden&&!$('#sheets').innerHTML)openQuick();HIDDEN_AT=0;render();checkReminders();if(MODE==='db'){flushAll();pull()}}});
 boot();
 </script>
 </body>
