@@ -131,6 +131,19 @@ main{padding:12px 16px 110px;max-width:880px;width:100%;margin:0 auto;min-width:
 .nitem .ntext{flex:1;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere;cursor:text;padding-top:1px}
 .nitem.done .ntext{text-decoration:line-through;color:var(--muted)}
 .nitem.editing{flex-direction:column;align-items:stretch}
+.nitem{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;align-items:center}
+.nitem.group{background:var(--surface);border-color:color-mix(in srgb,var(--gold) 45%,var(--line))}
+.nitem.group .ntext{font-weight:700}
+.nitem.moving{outline:2px dashed var(--gold);opacity:.6}
+.nitem.target{outline:2px dashed color-mix(in srgb,var(--teal) 70%,transparent);cursor:pointer}
+.ntog{width:24px;height:24px;border:0;background:none;padding:0;color:var(--muted);flex:none;display:grid;place-items:center}
+.ntog svg{width:16px;height:16px}
+.ncount{font-family:var(--f-mono);font-size:11px;font-weight:600;color:var(--muted);background:var(--surface2);border-radius:6px;padding:1px 6px}
+.nmenu{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+.nmenu button{border:0;border-bottom:1px solid var(--line);background:none;text-align:left;padding:12px 14px;font-weight:600;font-size:14.5px}
+.nmenu button:last-child{border-bottom:0;color:var(--muted)}
+.nmenu .danger{color:var(--danger)}
+.movebar{background:var(--gold-soft);color:var(--gold-ink);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px}
 .dhandle{position:fixed;right:0;top:42%;width:12px;height:72px;border:0;border-radius:10px 0 0 10px;background:var(--gold);opacity:.75;z-index:22;padding:0}
 .dhandle:active{width:18px}
 @media (min-width:900px){.dhandle{width:14px}}
@@ -336,7 +349,7 @@ textarea.inp{min-height:64px;resize:vertical}
 <button class="dhandle" id="dhandle" data-act="openDrawer" aria-label="Aklımdakiler listesini aç"></button>
 <script src="supabase.js"></script>
 <script>
-const APP_VERSION='1.7';
+const APP_VERSION='1.8';
 /* ============ utilities ============ */
 const pad=n=>String(n).padStart(2,'0');
 const dk=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -1387,12 +1400,21 @@ document.addEventListener('click',e=>{
     case 'openDrawer':openDrawer();break;
     case 'closeDrawer':closeDrawer();break;
     case 'noteToggle':if(S.notes[id]){const n=S.notes[id];n.done=!n.done;n.doneAt=n.done?Date.now():null;persist('c',id);renderDrawer()}break;
-    case 'noteEdit':NOTE_EDIT=id;renderDrawer();break;
+    case 'noteEdit':NOTE_EDIT=id;NOTE_MENU=null;renderDrawer();break;
     case 'noteSave':if(S.notes[id]){const v=$('#nt-edit').value.trim();if(v){S.notes[id].text=v;persist('c',id)}else{delete S.notes[id];persist('c',id)}NOTE_EDIT=null;renderDrawer()}break;
-    case 'noteDel':delete S.notes[id];persist('c',id);NOTE_EDIT=null;renderDrawer();toast('Silindi');break;
-    case 'noteToTask':if(S.notes[id]){const v=($('#nt-edit')?.value||S.notes[id].text).trim();const t={id:uid(),title:v,quad:null,scope:'none',date:null,time:null,dur:null,deduct:false,done:false,created:Date.now()};S.tasks[t.id]=t;persist('t',t.id);delete S.notes[id];persist('c',id);NOTE_EDIT=null;renderDrawer();render();toast('Görevlere taşındı (Planlanmamış)')}break;
+    case 'noteDel':noteRemove(id);NOTE_EDIT=NOTE_MENU=null;renderDrawer();toast('Silindi');break;
+    case 'noteToTask':if(S.notes[id]){const v=($('#nt-edit')?.value||S.notes[id].text).trim();const t={id:uid(),title:v,quad:null,scope:'none',date:null,time:null,dur:null,deduct:false,done:false,created:Date.now()};S.tasks[t.id]=t;persist('t',t.id);noteRemove(id);NOTE_EDIT=NOTE_MENU=null;renderDrawer();render();toast('Görevlere taşındı (Planlanmamış)')}break;
     case 'noteClearAsk':$('#nt-confirm').innerHTML=`<div class="pend"><div style="font-weight:700">Tamamlanan maddeler silinsin mi?</div><div class="btns"><button class="btn danger" data-act="noteClearYes">Evet, sil</button><button class="btn" data-act="cancelConfirm" data-sel="#nt-confirm">Vazgeç</button></div></div>`;break;
-    case 'noteClearYes':for(const n of notesArr().filter(n=>n.done)){delete S.notes[n.id];persist('c',n.id)}renderDrawer();toast('Temizlendi');break;
+    case 'noteClearYes':for(const n of notesArr().filter(n=>n.done))noteRemove(n.id);renderDrawer();toast('Temizlendi');break;
+    case 'cancelNoteEdit':NOTE_EDIT=null;renderDrawer();break;
+    case 'noteFold':if(S.notes[id]){S.notes[id].collapsed=!S.notes[id].collapsed;persist('c',id);renderDrawer()}break;
+    case 'noteMenuClose':NOTE_MENU=null;renderDrawer();break;
+    case 'noteMoveStart':NOTE_MOVE=id;NOTE_MENU=null;renderDrawer();break;
+    case 'noteMoveCancel':NOTE_MOVE=null;renderDrawer();break;
+    case 'noteMoveRoot':if(S.notes[NOTE_MOVE]){S.notes[NOTE_MOVE].parentId=null;persist('c',NOTE_MOVE);toast('En üst seviyeye alındı')}NOTE_MOVE=null;renderDrawer();break;
+    case 'noteUp':if(S.notes[id]){const n=S.notes[id],p=S.notes[n.parentId];n.parentId=p?.parentId||null;persist('c',id)}NOTE_MENU=null;renderDrawer();break;
+    case 'noteAddChild':NOTE_CHILD=id;NOTE_MENU=null;if(S.notes[id]){S.notes[id].collapsed=false}renderDrawer();break;
+    case 'noteChildClose':NOTE_CHILD=null;renderDrawer();break;
     case 'openQuick':openQuick();break;
     case 'allF':UI.allF=el.dataset.f;render();break;
     case 'planTask':if(T){const c=structuredClone(T);c.scope='day';c.date=dk(today());openTask(c,false)}break;
@@ -1615,31 +1637,105 @@ function peDelete(id){
 }
 
 /* ============ CHECKLIST DRAWER ============ */
-let DRAWER_OPEN=false,NOTE_EDIT=null;
+let DRAWER_OPEN=false,NOTE_EDIT=null,NOTE_MENU=null,NOTE_MOVE=null,NOTE_CHILD=null,SUPPRESS_CLICK=false;
 const notesArr=()=>Object.values(S.notes);
+const noteKids=id=>notesArr().filter(n=>n.parentId===id).sort((a,b)=>(a.done-b.done)||((a.created||0)-(b.created||0)));
+function noteDesc(id,d=0){let o=[];if(d>8)return o;for(const c of notesArr().filter(n=>n.parentId===id)){o.push(c.id);o=o.concat(noteDesc(c.id,d+1))}return o}
+function noteDepth(id){let d=0,n=S.notes[id];while(n&&n.parentId&&S.notes[n.parentId]&&d<8){d++;n=S.notes[n.parentId]}return d}
 function openDrawer(){DRAWER_OPEN=true;$('#drawer').classList.add('open');$('#dscrim').hidden=false;renderDrawer();setTimeout(()=>{const i=$('#nt-new');if(i&&!('ontouchstart' in window))i.focus()},250)}
-function closeDrawer(){DRAWER_OPEN=false;NOTE_EDIT=null;$('#drawer').classList.remove('open');$('#dscrim').hidden=true}
+function closeDrawer(){DRAWER_OPEN=false;NOTE_EDIT=NOTE_MENU=NOTE_MOVE=NOTE_CHILD=null;$('#drawer').classList.remove('open');$('#dscrim').hidden=true}
+function noteRemove(id){
+  const n=S.notes[id];if(!n)return;
+  for(const c of notesArr().filter(x=>x.parentId===id)){c.parentId=n.parentId||null;persist('c',c.id)}
+  delete S.notes[id];persist('c',id);
+}
 function renderDrawer(){
   if(!DRAWER_OPEN)return;
-  const open=notesArr().filter(n=>!n.done).sort((a,b)=>(b.created||0)-(a.created||0));
-  const done=notesArr().filter(n=>n.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
-  const item=n=>NOTE_EDIT===n.id
-    ?`<div class="nitem editing"><textarea class="inp" id="nt-edit" rows="2">${esc(n.text)}</textarea><div class="btns"><button class="btn pri" data-act="noteSave" data-id="${n.id}">Kaydet</button><button class="btn" data-act="noteToTask" data-id="${n.id}">Göreve çevir</button><button class="btn danger" data-act="noteDel" data-id="${n.id}">Sil</button></div></div>`
-    :`<div class="nitem ${n.done?'done':''}"><button class="check ${n.done?'on':''}" style="--qc:var(--gold)" data-act="noteToggle" data-id="${n.id}" aria-label="İşaretle">${IC.ok}</button><div class="ntext" data-act="noteEdit" data-id="${n.id}">${esc(n.text)}</div></div>`;
-  $('#drawer').innerHTML=`<div class="dhead"><b>Aklımdakiler</b><span class="muted small">${open.length} madde</span><button class="iconbtn" data-act="closeDrawer" aria-label="Kapat">${IC.x}</button></div>
-    <form id="nt-form" class="btns"><input class="inp" id="nt-new" placeholder="Aklına geleni yaz…" autocomplete="off" enterkeyhint="done" style="flex:1;width:auto;min-width:0"><button class="btn pri" type="submit">Ekle</button></form>
-    <div class="nlist">${open.map(item).join('')||'<div class="small muted">Liste boş. Yaz, Enter’a bas; sonra dokunup düzenlersin.</div>'}</div>
-    ${done.length?`<div class="sec" style="margin-top:14px"><h2>Tamamlanan (${done.length})</h2><button class="add" data-act="noteClearAsk">Temizle</button></div><div id="nt-confirm"></div><div class="nlist">${done.map(item).join('')}</div>`:''}`;
+  const roots=notesArr().filter(n=>!n.parentId||!S.notes[n.parentId]);
+  const openR=roots.filter(n=>!n.done).sort((a,b)=>(b.created||0)-(a.created||0));
+  const doneR=roots.filter(n=>n.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+  const moving=NOTE_MOVE?new Set([NOTE_MOVE,...noteDesc(NOTE_MOVE)]):null;
+  const tree=(n,depth)=>{
+    const kids=noteKids(n.id),kc=kids.length;
+    let h;
+    if(NOTE_EDIT===n.id){
+      h=`<div class="nitem editing" style="margin-left:${depth*20}px"><textarea class="inp" id="nt-edit" rows="2">${esc(n.text)}</textarea><div class="btns"><button class="btn pri" data-act="noteSave" data-id="${n.id}">Kaydet</button><button class="btn" data-act="cancelNoteEdit">Vazgeç</button></div></div>`;
+    }else{
+      const target=moving&&!moving.has(n.id)&&depth<3;
+      h=`<div class="nitem ${n.done?'done':''} ${kc?'group':''} ${moving&&moving.has(n.id)?'moving':''} ${target?'target':''}" data-nid="${n.id}" style="margin-left:${depth*20}px">
+        ${kc?`<button class="ntog" data-act="noteFold" data-id="${n.id}" aria-label="${n.collapsed?'Aç':'Kapat'}">${n.collapsed?IC.right:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 9l7 7 7-7"/></svg>'}</button>`:''}
+        <button class="check ${n.done?'on':''}" style="--qc:var(--gold)" data-act="noteToggle" data-id="${n.id}" aria-label="İşaretle">${IC.ok}</button>
+        <div class="ntext" data-act="noteEdit" data-id="${n.id}">${esc(n.text)}${kc?` <span class="ncount">${kids.filter(k=>k.done).length}/${kc}</span>`:''}</div>
+      </div>`;
+      if(NOTE_MENU===n.id)h+=`<div class="nmenu" style="margin-left:${depth*20}px">
+        <button data-act="noteMoveStart" data-id="${n.id}">Başka maddenin altına taşı</button>
+        ${n.parentId?`<button data-act="noteUp" data-id="${n.id}">Bir üst seviyeye çıkar</button>`:''}
+        ${depth<2?`<button data-act="noteAddChild" data-id="${n.id}">Alt madde ekle</button>`:''}
+        <button data-act="noteEdit" data-id="${n.id}">Düzenle</button>
+        <button data-act="noteToTask" data-id="${n.id}">Göreve çevir</button>
+        <button class="danger" data-act="noteDel" data-id="${n.id}">Sil</button>
+        <button data-act="noteMenuClose">Kapat</button></div>`;
+    }
+    if(NOTE_CHILD===n.id)h+=`<form class="btns nchildform" style="margin-left:${(depth+1)*20}px" data-parent="${n.id}"><input class="inp" id="nt-child" placeholder="Alt madde" autocomplete="off" enterkeyhint="done" style="flex:1;width:auto;min-width:0"><button class="btn pri" type="submit">Ekle</button><button class="btn" type="button" data-act="noteChildClose">Bitti</button></form>`;
+    if(kc&&!n.collapsed)for(const k of kids)h+=tree(k,depth+1);
+    return h;
+  };
+  const moveBar=NOTE_MOVE&&S.notes[NOTE_MOVE]?`<div class="movebar"><div><b>“${esc(S.notes[NOTE_MOVE].text.slice(0,40))}”</b> nereye gitsin? Bir maddeye dokun, onun altına girer.</div><div class="btns">${S.notes[NOTE_MOVE].parentId?'<button class="btn" data-act="noteMoveRoot">En üst seviyeye al</button>':''}<button class="btn" data-act="noteMoveCancel">Vazgeç</button></div></div>`:'';
+  const openCount=notesArr().filter(n=>!n.done).length;
+  $('#drawer').innerHTML=`<div class="dhead"><b>Aklımdakiler</b><span class="muted small">${openCount} madde</span><button class="iconbtn" data-act="closeDrawer" aria-label="Kapat">${IC.x}</button></div>
+    ${moveBar||`<form id="nt-form" class="btns"><input class="inp" id="nt-new" placeholder="Aklına geleni yaz…" autocomplete="off" enterkeyhint="done" style="flex:1;width:auto;min-width:0"><button class="btn pri" type="submit">Ekle</button></form>`}
+    <div class="nlist">${openR.map(n=>tree(n,0)).join('')||'<div class="small muted">Liste boş. Yaz, Enter’a bas.</div>'}</div>
+    ${doneR.length?`<div class="sec" style="margin-top:14px"><h2>Tamamlanan (${doneR.length})</h2><button class="add" data-act="noteClearAsk">Temizle</button></div><div id="nt-confirm"></div><div class="nlist">${doneR.map(n=>tree(n,0)).join('')}</div>`:''}
+    ${!moveBar&&openCount?'<div class="small muted">İpucu: Bir maddeye basılı tut; taşı, alt madde ekle ya da grupla.</div>':''}`;
   if(NOTE_EDIT){const t=$('#nt-edit');if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length)}}
+  if(NOTE_CHILD){const t=$('#nt-child');if(t)t.focus()}
 }
 document.addEventListener('submit',e=>{
-  if(e.target.id!=='nt-form')return;
-  e.preventDefault();
-  const i=$('#nt-new'),text=i.value.trim();if(!text)return;
-  const n={id:uid(),text,done:false,created:Date.now()};
-  S.notes[n.id]=n;persist('c',n.id);renderDrawer();
-  setTimeout(()=>{const x=$('#nt-new');if(x)x.focus()},20);
+  if(e.target.id==='nt-form'){
+    e.preventDefault();
+    const i=$('#nt-new'),text=i.value.trim();if(!text)return;
+    const n={id:uid(),text,done:false,created:Date.now(),parentId:null};
+    S.notes[n.id]=n;persist('c',n.id);renderDrawer();
+    setTimeout(()=>{const x=$('#nt-new');if(x)x.focus()},20);
+  }else if(e.target.classList.contains('nchildform')){
+    e.preventDefault();
+    const pid=e.target.dataset.parent,i=$('#nt-child'),text=i.value.trim();if(!text||!S.notes[pid])return;
+    const n={id:uid(),text,done:false,created:Date.now(),parentId:pid};
+    S.notes[n.id]=n;S.notes[pid].collapsed=false;persist('c',n.id);persist('c',pid);renderDrawer();
+  }
 });
+(function longPress(){
+  let timer=null,sx=0,sy=0,nid=null;
+  const start=e=>{
+    const it=e.target.closest('.nitem[data-nid]');if(!it||NOTE_MOVE||e.target.closest('.ntog'))return;
+    const p=e.touches?e.touches[0]:e;sx=p.clientX;sy=p.clientY;nid=it.dataset.nid;
+    clearTimeout(timer);timer=setTimeout(()=>{
+      SUPPRESS_CLICK=true;
+      try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}
+      NOTE_MENU=nid;NOTE_EDIT=null;renderDrawer();
+    },450);
+  };
+  const move=e=>{if(!timer)return;const p=e.touches?e.touches[0]:e;if(Math.abs(p.clientX-sx)>8||Math.abs(p.clientY-sy)>8){clearTimeout(timer);timer=null}};
+  const end=()=>{clearTimeout(timer);timer=null;if(SUPPRESS_CLICK)setTimeout(()=>{SUPPRESS_CLICK=false},90)};
+  document.addEventListener('touchstart',start,{passive:true});
+  document.addEventListener('touchmove',move,{passive:true});
+  document.addEventListener('touchend',end,{passive:true});
+  document.addEventListener('mousedown',e=>{if(!('ontouchstart' in window))start(e)});
+  document.addEventListener('mousemove',move);
+  document.addEventListener('mouseup',end);
+  document.addEventListener('contextmenu',e=>{if(e.target.closest('.nitem[data-nid]'))e.preventDefault()});
+})();
+document.addEventListener('click',e=>{
+  if(SUPPRESS_CLICK&&e.target.closest('#drawer')){SUPPRESS_CLICK=false;e.preventDefault();e.stopImmediatePropagation();return}
+  if(!NOTE_MOVE)return;
+  const it=e.target.closest('.nitem.target[data-nid]');
+  if(it){
+    e.preventDefault();e.stopImmediatePropagation();
+    const n=S.notes[NOTE_MOVE],tgt=S.notes[it.dataset.nid];
+    if(n&&tgt){n.parentId=tgt.id;tgt.collapsed=false;persist('c',n.id);persist('c',tgt.id);toast(`“${tgt.text.slice(0,30)}” altına taşındı`)}
+    NOTE_MOVE=null;renderDrawer();
+  }else if(e.target.closest('.nitem[data-nid]')){e.preventDefault();e.stopImmediatePropagation()}
+},true);
 (function edgeSwipe(){
   let sx=null,sy=0,mode=null;
   document.addEventListener('touchstart',e=>{
