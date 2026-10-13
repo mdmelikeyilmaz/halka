@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#152036">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Görev Ekle">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<title>Görev Ekle · Halka</title>
+<script>
+  if(matchMedia('(display-mode: standalone)').matches||navigator.standalone===true)location.replace('../?ekle=1');
+</script>
+<style>
+:root{--bg:#EDF1F7;--ink:#152036;--muted:#5B6880;--card:#fff;--line:#DAE1EC}
+@media (prefers-color-scheme:dark){:root{--bg:#0D121D;--ink:#E7ECF5;--muted:#98A3B9;--card:#151C2B;--line:#273147;color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:32px 16px}
+.box{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+img{width:72px;height:72px;border-radius:18px}
+h1{margin:0;font-size:24px}
+ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+a{color:inherit;font-weight:700}
+.muted{color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<div class="box">
+  <img src="apple-touch-icon.png" alt="">
+  <h1>“Görev Ekle” simgesi</h1>
+  <p class="muted" style="margin:0">Bu sayfayı ana ekrana eklersen, simgeye dokunduğunda doğrudan hızlı görev ekranı açılır: yaz, gönder, çık.</p>
+  <div class="card"><b>iPhone / iPad (Safari)</b>
+    <ol><li>Alttaki <b>Paylaş</b> düğmesine dokun.</li><li><b>Ana Ekrana Ekle</b>'yi seç, <b>Ekle</b> de.</li><li>İlk açılışta bir kez giriş yap.</li></ol></div>
+  <div class="card"><b>Android (Chrome)</b>
+    <ol><li>Ana ekrandaki Halka simgesine <b>basılı tut</b>, “Hızlı görev”i seç.</li><li>Ayrı simge istersen ⋮ menüsünden <b>Ana ekrana ekle</b> de.</li></ol></div>
+  <p class="muted"><a href="../">Halka'ya dön</a></p>
+</div>
+</body>
+</html>

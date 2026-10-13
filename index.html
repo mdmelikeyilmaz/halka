@@ -73,7 +73,29 @@ main{padding:12px 16px 110px;max-width:880px;width:100%;margin:0 auto;min-width:
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:6px;vertical-align:middle}
 .dot.on{background:var(--teal)}
 
-.tabbar{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));z-index:20}
+.quick{position:fixed;inset:0;background:var(--bg);z-index:75;display:flex;justify-content:center;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.qbox{width:100%;max-width:560px;display:flex;flex-direction:column;gap:14px}
+.qtop{display:flex;align-items:center;gap:10px}
+.qtitle{font-family:var(--f-display);font-weight:800;font-size:22px}
+.qcount{margin-left:auto;color:var(--teal);font-weight:700;font-size:14px}
+.qinp{width:100%;border:2px solid var(--line);background:var(--surface);border-radius:16px;padding:16px;font-size:22px;line-height:1.35;font-weight:500;resize:none;color:var(--ink)}
+.qinp:focus{outline:none;border-color:var(--ink)}
+.qsend{padding:16px;font-size:17px;border-radius:14px}
+.qdone{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--teal);font-weight:800;font-size:17px}
+.qdone svg{width:22px;height:22px}
+.qdone.pop{animation:clink .4s ease-out}
+.trow{display:flex;align-items:center;gap:12px;padding:12px 12px 12px 10px;border-radius:12px;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--line);min-width:0}
+.trow.planned{background:var(--teal-soft);border-color:color-mix(in srgb,var(--teal) 35%,var(--line));border-left-color:var(--teal)}
+.trow.done{opacity:.55}
+.trow.done .t{text-decoration:line-through}
+.trow .body{flex:1;min-width:0;cursor:pointer}
+.trow .t{font-weight:600;overflow-wrap:anywhere}
+.trow .m{font-size:12.5px;color:var(--muted)}
+.trow.planned .m{color:var(--teal);font-weight:600}
+.trow .plan{border:1px solid var(--line);background:var(--surface2);border-radius:9px;padding:6px 10px;font-size:13px;font-weight:700;white-space:nowrap}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:-4px 0 10px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid var(--line)}
+.tabbar{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(6,1fr);background:var(--surface);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));z-index:20}
 .tabbar button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--muted);padding:4px 0}
 .tabbar svg{width:22px;height:22px}
 .tabbar button[aria-current="true"]{color:var(--ink)}
@@ -266,6 +288,7 @@ textarea.inp{min-height:64px;resize:vertical}
 <canvas id="fx"></canvas>
 
 <div class="auth" id="auth" hidden></div>
+<div class="quick" id="quick" hidden></div>
 <script src="supabase.js"></script>
 <script>
 /* ============ utilities ============ */
@@ -301,6 +324,7 @@ const IC={
  bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15z"/><path d="M10 21h4"/></svg>',
  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
  brk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 8H6a4 4 0 000 8h3M15 8h3a4 4 0 010 8h-3M12 4v3M12 17v3"/></svg>',
+ list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3" fill="currentColor"/><circle cx="4.5" cy="12" r="1.3" fill="currentColor"/><circle cx="4.5" cy="18" r="1.3" fill="currentColor"/></svg>',
  sync:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 11a8 8 0 00-14.5-4.5L4 8M4 13a8 8 0 0014.5 4.5L20 16"/><path d="M4 4v4h4M20 20v-4h-4"/></svg>',
 };
 const linkSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><rect x="2" y="8" width="11" height="8" rx="4"/><rect x="11" y="8" width="11" height="8" rx="4"/></svg>';
@@ -634,13 +658,13 @@ function renderClocks(){
 let VERSION=0;
 
 /* ============ render shell ============ */
-const TABS=[['today','Bugün',IC.today],['plan','Plan',IC.plan],['routines','Rutinler',IC.chain],['matrix','Matris',IC.matrix],['settings','Ayarlar',IC.gear]];
+const TABS=[['today','Bugün',IC.today],['all','Görevler',IC.list],['plan','Plan',IC.plan],['routines','Rutinler',IC.chain],['matrix','Matris',IC.matrix],['settings','Ayarlar',IC.gear]];
 function render(){
   VERSION++;
   const storeTxt=storeText();
   $('#side').innerHTML=`<div class="brand">${brandSvg()}Halka</div>`+TABS.map(([k,l,i])=>`<button class="navbtn" data-tab="${k}" aria-current="${UI.tab===k}">${i}${l}</button>`).join('')+`<div class="store">${storeTxt}</div>`;
   $('#tabbar').innerHTML=TABS.map(([k,l,i])=>`<button data-tab="${k}" aria-current="${UI.tab===k}">${i}<span>${l}</span></button>`).join('');
-  const v={today:viewToday,plan:viewPlan,routines:viewRoutines,matrix:viewMatrix,settings:viewSettings}[UI.tab]||viewToday;
+  const v={today:viewToday,all:viewAll,plan:viewPlan,routines:viewRoutines,matrix:viewMatrix,settings:viewSettings}[UI.tab]||viewToday;
   $('#view').innerHTML=v();
   renderClocks();
 }
@@ -748,7 +772,7 @@ function viewToday(){
   ${partSecs}
   <div class="sec"><h2>Saat çizelgesi</h2><button class="add" data-act="newTask" data-scope="day" data-date="${k}" data-timed="1">+ Saatli görev</button></div>
   <div class="list">${tl||'<div class="empty">Saat verilmiş bir şey yok. Bir göreve saat ve süre verince burada sıralanır.</div>'}</div>
-  ${inbox.length?`<div class="sec"><h2>Gelen kutusu · tarih bekliyor</h2></div><div class="list">${inbox.map(t=>taskRow(t)).join('')}</div>`:''}
+  ${inbox.length?`<div class="sec"><h2>Planlanmamış görevler</h2><button class="add" data-tab="all">Tümünü gör</button></div><div class="list">${inbox.map(t=>taskRow(t)).join('')}</div>`:''}
   ${doneT.length?`<div class="sec"><h2>Tamamlananlar (${doneT.length})</h2></div><div class="list">${doneT.map(t=>taskRow(t)).join('')}</div>`:''}
   `;
 }
@@ -850,6 +874,31 @@ function viewRoutines(){
 }
 
 /* ============ MATRIX ============ */
+function planLabel(t){
+  if(t.scope==='none'||!t.date)return 'Planlanmadı';
+  const d=pd(t.date);
+  if(t.scope==='day')return `${fmtDay(d)} ${DAYS[wdi(d)]}${t.time?' · '+t.time:''}${t.dur?' · '+fmtDur(t.dur):''}`;
+  if(t.scope==='week')return `${fmtDay(monday(d))} haftası`;
+  if(t.scope==='month')return `${MON[d.getMonth()]} ${d.getFullYear()}`;
+  return `${d.getFullYear()} yılı`;
+}
+function viewAll(){
+  const f=UI.allF||'open',all=tasksArr();
+  const open=all.filter(t=>!t.done);
+  const un=open.filter(t=>t.scope==='none').sort((a,b)=>(b.created||0)-(a.created||0));
+  const pl=open.filter(t=>t.scope!=='none').sort((a,b)=>(a.date||'').localeCompare(b.date||'')||((toMin(a.time)??9999)-(toMin(b.time)??9999)));
+  const dn=all.filter(t=>t.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+  const list=f==='un'?un:f==='pl'?pl:f==='done'?dn:[...un,...pl];
+  const row=t=>{const planned=t.scope!=='none';return `<div class="trow ${planned?'planned':''} ${t.done?'done':''}" style="--qc:${planned?'var(--teal)':'var(--q4)'}">
+    <button class="check ${t.done?'on':''}" data-act="toggleTask" data-id="${t.id}" aria-label="${t.done?'Tamamlanmadı yap':'Tamamlandı'}">${IC.ok}</button>
+    <div class="body" data-act="editTask" data-id="${t.id}"><div class="t">${esc(t.title)}</div><div class="m">${planLabel(t)}</div></div>
+    ${!planned&&!t.done?`<button class="plan" data-act="planTask" data-id="${t.id}">Planla</button>`:''}</div>`};
+  const segs=[['open','Açık',open.length],['un','Planlanmamış',un.length],['pl','Planlı',pl.length],['done','Biten',dn.length]];
+  return `<div class="head"><h1>Tüm görevler</h1><button class="btn pri" data-act="openQuick">+ Ekle</button></div>
+  <div class="chips" style="margin-bottom:12px">${segs.map(([k,l,n])=>`<button class="chip" aria-pressed="${f===k}" data-act="allF" data-f="${k}">${l} · ${n}</button>`).join('')}</div>
+  <div class="legend"><span><i style="background:var(--surface)"></i>Planlanmadı</span><span><i style="background:var(--teal-soft);border-color:var(--teal)"></i>Planlandı (tarih verildi)</span></div>
+  <div class="list">${list.map(row).join('')||`<div class="empty">${f==='done'?'Henüz biten görev yok.':'Burada görev yok. + Ekle ile yazıp gönder, sonra planlarsın.'}</div>`}</div>`;
+}
 function viewMatrix(){
   const f=UI.mxFilter,t0=today(),w0=monday(t0),wEnd=addD(w0,6);
   const inF=t=>{
@@ -896,7 +945,7 @@ function viewSettings(){
   <div class="card" style="margin-top:12px">
     <h3>Uygulamayı yükle</h3>
     ${isStandalone()?'<p class="small muted" style="margin:0">Halka bu cihazda uygulama olarak yüklü.</p>':`<p class="small muted" style="margin:0">Android ve bilgisayarda aşağıdaki düğmeyle yükleyebilirsin. iPhone ve iPad'de Safari'de Paylaş düğmesine, sonra “Ana Ekrana Ekle”ye dokun.</p>${INSTALL?'<div class="btns"><button class="btn gold" data-act="installApp">Uygulamayı yükle</button></div>':''}`}
-    <p class="small muted" style="margin:0">Hızlı görev için uygulama simgesine basılı tut ve “Hızlı görev”i seç (Android). Her cihazda <span class="mono">mdmelikeyilmaz.github.io/halka/?ekle</span> adresi de doğrudan hızlı görev ekranını açar.</p>
+    <p class="small muted" style="margin:0">Hızlı görev için uygulama simgesine basılı tut ve “Hızlı görev”i seç (Android). Ana ekranda ayrı bir <b>Görev Ekle</b> simgesi istersen <a href="ekle/" style="color:inherit;font-weight:700">bu sayfayı</a> aç ve ana ekrana ekle; simge doğrudan yaz-gönder ekranını açar.</p>
   </div>
   <div class="card" style="margin-top:12px">
     <h3>Veri</h3>
@@ -939,27 +988,30 @@ function closeSheet(){$('#sheets').innerHTML='';if(location.hash==='#ekle'||loca
 const shead=t=>`<div class="shead"><h2>${t}</h2><button class="iconbtn x" data-act="close" aria-label="Kapat">${IC.x}</button></div>`;
 
 /* quick add */
-let QA={quad:null,when:'today'};
+let QA={count:0};
 function openQuick(){
-  QA={quad:null,when:'today'};
-  openSheet(`<div style="display:flex;gap:8px;align-items:center">
-    <input class="inp big" id="qa-title" placeholder="Ne yapılacak?" autocomplete="off" enterkeyhint="send" style="flex:1;min-width:0">
-    <button class="btn pri" data-act="qaSave" style="padding:15px 18px">Gönder</button></div>`,s=>{
-      const i=s.querySelector('#qa-title');setTimeout(()=>i.focus(),60);
-      i.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();qaSave(false)}});
-    });
+  QA={count:0};
+  const el=$('#quick');el.hidden=false;
+  el.innerHTML=`<form class="qbox" id="qa-form">
+    <div class="qtop"><span class="qtitle">Hızlı görev</span><span class="qcount" id="qa-count"></span><button type="button" class="iconbtn" data-act="qaClose" aria-label="Kapat">${IC.x}</button></div>
+    <textarea class="qinp" id="qa-title" rows="3" placeholder="Ne yapılacak?" autocomplete="off" enterkeyhint="send"></textarea>
+    <button class="btn pri qsend" type="submit">Gönder</button>
+    <div class="qdone" id="qa-done" hidden>${IC.ok}<span>Eklendi</span></div>
+  </form>`;
+  const i=$('#qa-title');setTimeout(()=>i.focus(),50);
+  i.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();qaSave()}});
+  $('#qa-form').addEventListener('submit',e=>{e.preventDefault();qaSave()});
 }
-function qaSave(next){
+function closeQuick(){const el=$('#quick');el.hidden=true;el.innerHTML='';if(location.hash==='#ekle'||location.search)history.replaceState(null,'',location.pathname);render()}
+function qaSave(){
   const i=$('#qa-title');const title=i.value.trim();if(!title){i.focus();return}
-  const t0=today();let scope='day',date=dk(t0);
-  if(QA.when==='tomorrow')date=dk(addD(t0,1));
-  if(QA.when==='week'){scope='week';date=dk(monday(t0))}
-  if(QA.when==='month'){scope='month';date=dk(new Date(t0.getFullYear(),t0.getMonth(),1))}
-  if(QA.when==='none'){scope='none';date=null}
-  const t={id:uid(),title,quad:QA.quad,scope,date,time:null,dur:null,deduct:false,done:false,created:Date.now()};
-  S.tasks[t.id]=t;persist('t',t.id);render();
-  toast('Bugüne eklendi: '+title);
-  if(next){i.value='';i.focus()}else closeSheet();
+  const t={id:uid(),title,quad:null,scope:'none',date:null,time:null,dur:null,deduct:false,done:false,created:Date.now()};
+  S.tasks[t.id]=t;persist('t',t.id);
+  QA.count++;
+  i.value='';i.focus();
+  $('#qa-count').textContent=`${QA.count} eklendi`;
+  const d=$('#qa-done');d.hidden=false;d.classList.remove('pop');void d.offsetWidth;d.classList.add('pop');
+  clearTimeout(QA.t);QA.t=setTimeout(()=>{d.hidden=true},1200);
 }
 
 /* task editor */
@@ -1219,6 +1271,10 @@ document.addEventListener('click',e=>{
     case 'mx':UI.mxFilter=el.dataset.f;render();break;
     case 'clockinfo':openClockInfo(el.dataset.k);break;
     /* quick add */
+    case 'qaClose':closeQuick();break;
+    case 'openQuick':openQuick();break;
+    case 'allF':UI.allF=el.dataset.f;render();break;
+    case 'planTask':if(T){const c=structuredClone(T);c.scope='day';c.date=dk(today());openTask(c,false)}break;
     case 'qaWhen':QA.when=el.dataset.k;document.querySelectorAll('#qa-when .chip').forEach(b=>b.setAttribute('aria-pressed',b===el));break;
     case 'qaQuad':QA.quad=QA.quad===el.dataset.k?null:el.dataset.k;document.querySelectorAll('#qa-quad button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===QA.quad));break;
     case 'qaSave':qaSave(false);break;
@@ -1296,7 +1352,7 @@ document.addEventListener('change',e=>{
   if(a==='setEowDay'){st.eowDay=+el.value;persist('s')}
   if(a==='setEowTime'){st.eowTime=el.value||'20:00';persist('s')}
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#sheets').innerHTML)closeSheet()});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if($('#sheets').innerHTML)closeSheet();else if(!$('#quick').hidden)closeQuick()});
 window.addEventListener('hashchange',()=>{if(location.hash==='#ekle')openQuick()});
 function copyText(s,msg){try{navigator.clipboard.writeText(s).then(()=>toast(msg),()=>showCopy(s))}catch(e){showCopy(s)}}
 function showCopy(s){openSheet(`${shead('Kopyala')}<textarea class="inp code" id="cp" readonly>${esc(s)}</textarea><div class="small muted">Metni seçip kopyala.</div>`,sh=>{const t=sh.querySelector('#cp');t.focus();t.select()})}
