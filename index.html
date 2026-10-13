@@ -225,6 +225,20 @@ main{padding:12px 16px 110px;max-width:880px;width:100%;margin:0 auto;min-width:
 .ms-slot b{color:var(--muted);font-weight:700;margin-right:4px}
 .mealtoday{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;font-size:14.5px}
 .mealtoday .mlabel{display:inline-block;width:76px;padding-top:0}
+.topbar{display:flex;align-items:center;gap:10px;margin:-2px 0 10px}
+.topbar .menubtn{border:0;background:none;width:40px;height:36px;margin-left:-8px}
+.topbar .menubtn svg{width:22px;height:22px}
+.tbrand{font-family:var(--f-display);font-weight:800;font-size:17px;letter-spacing:-.01em}
+@media (min-width:900px){.topbar{display:none}}
+.ldrawer{position:fixed;top:0;left:0;bottom:0;width:min(82vw,320px);background:var(--surface);z-index:56;box-shadow:8px 0 30px rgba(0,0,0,.18);transform:translateX(-105%);transition:transform .22s ease-out;padding:calc(14px + env(safe-area-inset-top,0px)) 12px calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:2px;overflow-y:auto;border-radius:0 18px 18px 0}
+.ldrawer.open{transform:none}
+.ldrawer .dhead{margin-bottom:8px}
+.lsec{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:14px 8px 6px}
+.lnav{display:flex;align-items:center;gap:12px;padding:11px 10px;border:0;background:none;border-radius:12px;text-align:left;font-weight:600;font-size:15.5px;color:var(--ink);-webkit-user-select:none;user-select:none}
+.lnav svg{width:21px;height:21px;color:var(--muted);flex:none}
+.lnav[aria-current="true"]{background:var(--surface2)}
+.lnav[aria-current="true"] svg{color:var(--accent)}
+.hidrow .seg button{padding:6px 10px;font-size:12.5px}
 /* clocks */
 .clocks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:10px}
 .clock{background:none;border:0;border-left:1px solid var(--line);padding:2px 10px;text-align:left;min-width:0}
@@ -402,6 +416,7 @@ textarea.inp{min-height:64px;resize:vertical}
 <div id="app">
   <aside class="side" id="side"></aside>
   <main>
+    <div class="topbar"><button class="iconbtn menubtn" data-act="openLeft" aria-label="Sol menüyü aç"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h11M4 17h16"/></svg></button><span class="tbrand">Halka</span></div>
     <div class="clocks" id="clocks" aria-label="Geri sayım sayaçları"></div>
     <div id="view"></div>
   </main>
@@ -416,10 +431,12 @@ textarea.inp{min-height:64px;resize:vertical}
 <div class="quick" id="quick" hidden></div>
 <div class="dscrim" id="dscrim" hidden data-act="closeDrawer"></div>
 <aside class="drawer" id="drawer" aria-label="Aklımdakiler"></aside>
+<div class="dscrim" id="lscrim" hidden data-act="closeLeft"></div>
+<nav class="ldrawer" id="ldrawer" aria-label="Sol menü"></nav>
 <button class="dhandle" id="dhandle" data-act="openDrawer" aria-label="Aklımdakiler listesini aç"></button>
 <script src="supabase.js"></script>
 <script>
-const APP_VERSION='2.1';
+const APP_VERSION='2.2';
 /* ============ utilities ============ */
 const pad=n=>String(n).padStart(2,'0');
 const dk=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -796,6 +813,23 @@ const TAB_NAMES={all:'Görevler',projects:'Projeler',plan:'Plan',routines:'Rutin
 const SECS={clocks:'Geri sayım sayaçları',motiv:'Günün halkası',banners:'Uyarılar',untimed:'Saati belirsiz',parts:'Sabah · Öğle · Akşam',timeline:'Saat çizelgesi',inbox:'Planlanmamış görevler',doneList:'Tamamlananlar',meals:'Bugünün yemekleri'};
 const hiddenTabs=()=>S.settings.hiddenTabs||[];
 const hiddenSecs=()=>S.settings.hiddenSecs||[];
+const leftTabs=()=>Array.isArray(S.settings.leftTabs)?S.settings.leftTabs:['plan','meals'];
+let LEFT_OPEN=false;
+function openLeft(){LEFT_OPEN=true;renderLeft();$('#ldrawer').classList.add('open');$('#lscrim').hidden=false}
+function closeLeft(){LEFT_OPEN=false;$('#ldrawer').classList.remove('open');$('#lscrim').hidden=true}
+function renderLeft(){
+  const el=$('#ldrawer');if(!el)return;
+  const lt=leftTabs().filter(k=>!hiddenTabs().includes(k)),all=TABS.filter(([k])=>!hiddenTabs().includes(k)&&k!=='more');
+  const item=([k,l,i],lp)=>`<button class="lnav" data-tab="${k}" ${lp?`data-lp="${lp}:${k}"`:''} aria-current="${UI.tab===k}">${i}<span>${l}</span></button>`;
+  el.innerHTML=`<div class="dhead"><span class="brand" style="padding:0">${brandSvg()}Halka</span><button class="iconbtn" data-act="closeLeft" aria-label="Kapat">${IC.x}</button></div>
+    ${lt.length?`<div class="lsec">Sol menü</div>${TABS.filter(([k])=>lt.includes(k)).map(t=>item(t,'ltab')).join('')}`:''}
+    <div class="lsec">Tüm sekmeler</div>${all.filter(([k])=>!lt.includes(k)).map(t=>item(t,t[0]==='today'?'':'tab')).join('')}
+    <div class="lsec">Diğer</div>
+    <button class="lnav" data-act="openDrawer">${IC.note}<span>Aklımdakiler</span></button>
+    <button class="lnav" data-tab="more">${IC.dots}<span>Daha · gizlenenler, renkler</span></button>
+    <button class="lnav" data-tab="settings">${IC.gear}<span>Ayarlar</span></button>
+    <div class="small muted" style="padding:10px 4px">Bir sekmeye basılı tutup alt menüye ya da sol menüye taşıyabilirsin.</div>`;
+}
 const secOn=k=>!hiddenSecs().includes(k);
 const COLOR_KEYS={accent:['Ana renk (vurgu)','#2F5D50'],chain:['Zincir rengi','#A8823A'],q1:['Acil · Önemli','#A9524A'],q2:['Acil değil · Önemli','#4C6A8C'],q3:['Acil · Önemsiz','#A88438'],q4:['Acil değil · Önemsiz','#8A8D93']};
 function applyColors(){const c=S.settings.colors||{},st=document.documentElement.style;for(const k of Object.keys(COLOR_KEYS)){if(c[k])st.setProperty(`--${k}-base`,c[k]);else st.removeProperty(`--${k}-base`)}}
@@ -804,8 +838,9 @@ function render(){
   const storeTxt=storeText();
   $('#side').innerHTML=`<div class="brand">${brandSvg()}Halka</div>`+TABS.filter(([k])=>!hiddenTabs().includes(k)).map(([k,l,i])=>`<button class="navbtn" data-tab="${k}" ${k!=='today'&&k!=='more'?`data-lp="tab:${k}"`:''} aria-current="${UI.tab===k}">${i}${l}</button>`).join('')+`<button class="navbtn" data-act="openDrawer">${IC.note}Aklımdakiler</button><div class="store">${storeTxt}</div>`;
   applyColors();
-  const vis=TABS.filter(([k])=>!hiddenTabs().includes(k));
-  const cur=vis.some(([k])=>k===UI.tab)?UI.tab:'more';
+  const vis=TABS.filter(([k])=>!hiddenTabs().includes(k)&&(k==='today'||k==='more'||!leftTabs().includes(k)));
+  const cur=vis.some(([k])=>k===UI.tab)?UI.tab:(leftTabs().includes(UI.tab)?'':'more');
+  renderLeft();
   $('#tabbar').style.gridTemplateColumns=`repeat(${vis.length},1fr)`;
   $('#tabbar').innerHTML=vis.map(([k,l,i])=>`<button data-tab="${k}" ${k!=='today'&&k!=='more'?`data-lp="tab:${k}"`:''} aria-current="${cur===k}">${i}<span>${l}</span></button>`).join('');
   $('#clocks').hidden=!secOn('clocks');
@@ -1447,7 +1482,7 @@ function seedExamples(){
 }
 
 document.addEventListener('click',e=>{
-  const tab=e.target.closest('[data-tab]');if(tab){setTab(tab.dataset.tab);return}
+  const tab=e.target.closest('[data-tab]');if(tab){if(LEFT_OPEN)closeLeft();setTab(tab.dataset.tab);return}
   if(e.target.closest('#fab')){openQuick();return}
   const el=e.target.closest('[data-act]');if(!el)return;
   const a=el.dataset.act,id=el.dataset.id;
@@ -1476,6 +1511,11 @@ document.addEventListener('click',e=>{
     case 'clockinfo':openClockInfo(el.dataset.k);break;
     /* quick add */
     case 'qaClose':closeQuick();break;
+    case 'openLeft':openLeft();break;
+    case 'closeLeft':closeLeft();break;
+    case 'lpToLeft':{const k=el.dataset.k;S.settings.leftTabs=[...new Set([...leftTabs(),k])];persist('s');closeSheet();render();toast('Sol menüye taşındı · ☰ ile açılır');break}
+    case 'lpToBottom':{const k=el.dataset.k;S.settings.leftTabs=leftTabs().filter(x=>x!==k);S.settings.hiddenTabs=hiddenTabs().filter(x=>x!==k);persist('s');closeSheet();render();toast('Alt menüye taşındı');break}
+    case 'tabPlace':{const k=el.dataset.k,p=el.dataset.p;let lt=leftTabs().filter(x=>x!==k),ht=hiddenTabs().filter(x=>x!==k);if(p==='left')lt.push(k);if(p==='hidden')ht.push(k);S.settings.leftTabs=lt;S.settings.hiddenTabs=ht;persist('s');render();break}
     case 'reSugApply':applySug(RSUG[+el.dataset.i],false);break;
     case 'reSugPick':{const sg=RSUG[+el.dataset.i];$('#re-name').value=sg.n;applySug(sg,true);break}
     case 'mealMode':UI.mealMode=el.dataset.m;render();break;
@@ -1613,7 +1653,7 @@ document.addEventListener('change',e=>{
   if(a==='setEowDay'){st.eowDay=+el.value;persist('s')}
   if(a==='setEowTime'){st.eowTime=el.value||'20:00';persist('s')}
 });
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='nt-edit'&&!e.shiftKey){e.preventDefault();const b=document.querySelector('[data-act=noteSave]');b&&b.click();return}if(e.key!=='Escape')return;if(DRAWER_OPEN){closeDrawer();return}if($('#sheets').innerHTML)closeSheet();else if(!$('#quick').hidden)closeQuick()});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='nt-edit'&&!e.shiftKey){e.preventDefault();const b=document.querySelector('[data-act=noteSave]');b&&b.click();return}if(e.key!=='Escape')return;if(DRAWER_OPEN){closeDrawer();return}if($('#sheets').innerHTML)closeSheet();else if(LEFT_OPEN)closeLeft();else if(!$('#quick').hidden)closeQuick()});
 window.addEventListener('hashchange',()=>{if(location.hash==='#ekle')openQuick()});
 function copyText(s,msg){try{navigator.clipboard.writeText(s).then(()=>toast(msg),()=>showCopy(s))}catch(e){showCopy(s)}}
 function showCopy(s){openSheet(`${shead('Kopyala')}<textarea class="inp code" id="cp" readonly>${esc(s)}</textarea><div class="small muted">Metni seçip kopyala.</div>`,sh=>{const t=sh.querySelector('#cp');t.focus();t.select()})}
@@ -1857,7 +1897,9 @@ document.addEventListener('click',e=>{
   let sx=null,sy=0,mode=null;
   document.addEventListener('touchstart',e=>{
     const t=e.touches[0];
-    if(!DRAWER_OPEN&&t.clientX>innerWidth-24&&$('#quick').hidden&&$('#auth').hidden){sx=t.clientX;sy=t.clientY;mode='open'}
+    if(!DRAWER_OPEN&&!LEFT_OPEN&&t.clientX>innerWidth-24&&$('#quick').hidden&&$('#auth').hidden){sx=t.clientX;sy=t.clientY;mode='open'}
+    else if(!DRAWER_OPEN&&!LEFT_OPEN&&t.clientX<20&&$('#quick').hidden&&$('#auth').hidden){sx=t.clientX;sy=t.clientY;mode='lopen'}
+    else if(LEFT_OPEN&&e.target.closest('#ldrawer')){sx=t.clientX;sy=t.clientY;mode='lclose'}
     else if(DRAWER_OPEN&&e.target.closest('#drawer')){sx=t.clientX;sy=t.clientY;mode='close'}
     else sx=null;
   },{passive:true});
@@ -1866,6 +1908,8 @@ document.addEventListener('click',e=>{
     if(dy>60){sx=null;return}
     if(mode==='open'&&dx<-40){sx=null;openDrawer()}
     if(mode==='close'&&dx>70){sx=null;closeDrawer()}
+    if(mode==='lopen'&&dx>40){sx=null;openLeft()}
+    if(mode==='lclose'&&dx<-70){sx=null;closeLeft()}
   },{passive:true});
   document.addEventListener('touchend',()=>{sx=null},{passive:true});
 })();
@@ -1929,7 +1973,8 @@ let LP_SUPPRESS=false;
 function openLp(spec){
   const [type,val]=spec.split(':');
   const items=[];
-  if(type==='tab'){items.push(['lpHideTab',val,`“${TAB_NAMES[val]||val}” sekmesini gizle`]);items.push(['lpColor','accent','Ana rengi değiştir'])}
+  if(type==='tab'){if(!leftTabs().includes(val))items.push(['lpToLeft',val,`“${TAB_NAMES[val]||val}” sekmesini sol menüye taşı`]);else items.push(['lpToBottom',val,`“${TAB_NAMES[val]||val}” sekmesini alt menüye taşı`]);items.push(['lpHideTab',val,`“${TAB_NAMES[val]||val}” sekmesini gizle`]);items.push(['lpColor','accent','Ana rengi değiştir'])}
+  if(type==='ltab'){items.push(['lpToBottom',val,`“${TAB_NAMES[val]||val}” sekmesini alt menüye taşı`]);items.push(['lpHideTab',val,`“${TAB_NAMES[val]||val}” sekmesini gizle`])}
   if(type==='sec'){items.push(['lpHideSec',val,`“${SECS[val]||val}” bölümünü gizle`]);items.push(['lpColor','accent','Ana rengi değiştir'])}
   if(type==='color'){openColor({kind:'set',key:val});return}
   if(type==='routine'&&S.routines[val]){items.push(['lpColorR',val,'Rengini değiştir']);items.push(['editRoutine',val,'Düzenle'])}
@@ -1974,6 +2019,11 @@ function viewMore(){
     ${!ht.length&&!hs.length?'<p class="small muted" style="margin:0">Gizlenen bir şey yok. Alttaki bir sekmeye ya da Bugün ekranındaki bir bölüm başlığına basılı tutup “gizle” diyebilirsin.</p>':''}
     ${ht.length?`<div>${ht.map(k=>`<div class="hidrow"><span>${TAB_NAMES[k]||k} <span class="small muted" style="font-weight:500">· sekme</span></span><button class="btn" style="padding:8px 12px" data-tab="${k}">Aç</button><button class="btn" style="padding:8px 12px" data-act="unhideTab" data-k="${k}">Geri getir</button></div>`).join('')}</div>`:''}
     ${hs.length?`<div>${hs.map(k=>`<div class="hidrow"><span>${SECS[k]||k} <span class="small muted" style="font-weight:500">· Bugün bölümü</span></span><button class="btn" style="padding:8px 12px" data-act="unhideSec" data-k="${k}">Geri getir</button></div>`).join('')}</div>`:''}
+  </div>
+  <div class="card" style="margin-top:12px">
+    <h3>Menü düzeni</h3>
+    <p class="small muted" style="margin:0">Her sekmenin nerede duracağını seç: alttaki çubukta, soldan açılan menüde (☰) ya da gizli.</p>
+    <div>${TABS.filter(([k])=>k!=='today'&&k!=='more').map(([k,l])=>{const p=hiddenTabs().includes(k)?'hidden':leftTabs().includes(k)?'left':'bottom';return `<div class="hidrow"><span>${l}</span><div class="seg">${[['bottom','Alt'],['left','Sol'],['hidden','Gizli']].map(([v,t])=>`<button aria-pressed="${p===v}" data-act="tabPlace" data-k="${k}" data-p="${v}">${t}</button>`).join('')}</div></div>`}).join('')}</div>
   </div>
   <div class="card" style="margin-top:12px">
     <h3>Renkler</h3>
