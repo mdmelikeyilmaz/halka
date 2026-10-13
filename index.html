@@ -204,6 +204,27 @@ main{padding:12px 16px 110px;max-width:880px;width:100%;margin:0 auto;min-width:
 .hidrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .hidrow:last-child{border-bottom:0}
 .hidrow span{flex:1;font-weight:600}
+.sugcard{display:flex;gap:12px;align-items:center;background:var(--teal-soft);border-radius:14px;padding:12px}
+.mealday{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.mealday.today{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.mealday.past{opacity:.6}
+.mdh{display:flex;align-items:baseline;gap:8px}
+.mdh b{font-family:var(--f-display);font-size:17px}
+.mslot{display:grid;grid-template-columns:76px 1fr;gap:8px;align-items:start}
+.mlabel{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:7px}
+.mitems{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.mchip{border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:6px 10px;font-size:14px;font-weight:600;text-align:left;max-width:100%;overflow-wrap:anywhere}
+.madd{border:1px dashed var(--line);background:none;border-radius:10px;width:34px;height:32px;color:var(--muted);font-size:18px;line-height:1}
+.mmonth{display:flex;flex-direction:column;gap:4px}
+.mrow{display:flex;gap:12px;align-items:center;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 12px;min-width:0}
+.mrow.today{border-color:var(--accent)}
+.mdate{display:flex;flex-direction:column;align-items:center;width:30px;flex:none}
+.mdate b{font-family:var(--f-display);font-size:17px;line-height:1}
+.mdate small{font-size:10px;color:var(--muted);font-weight:600}
+.msum{display:flex;flex-direction:column;gap:1px;font-size:13px;min-width:0}
+.ms-slot b{color:var(--muted);font-weight:700;margin-right:4px}
+.mealtoday{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;font-size:14.5px}
+.mealtoday .mlabel{display:inline-block;width:76px;padding-top:0}
 /* clocks */
 .clocks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:10px}
 .clock{background:none;border:0;border-left:1px solid var(--line);padding:2px 10px;text-align:left;min-width:0}
@@ -398,7 +419,7 @@ textarea.inp{min-height:64px;resize:vertical}
 <button class="dhandle" id="dhandle" data-act="openDrawer" aria-label="Aklımdakiler listesini aç"></button>
 <script src="supabase.js"></script>
 <script>
-const APP_VERSION='2.0.1';
+const APP_VERSION='2.1';
 /* ============ utilities ============ */
 const pad=n=>String(n).padStart(2,'0');
 const dk=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -432,6 +453,7 @@ const IC={
  bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15z"/><path d="M10 21h4"/></svg>',
  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
  brk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 8H6a4 4 0 000 8h3M15 8h3a4 4 0 010 8h-3M12 4v3M12 17v3"/></svg>',
+ food:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13h16a8 8 0 01-16 0z"/><path d="M9 9c0-2 2-2 2-4M13 9c0-2 2-2 2-4"/><path d="M3 21h18"/></svg>',
  dots:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
  folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M3 10h18"/></svg>',
  note:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>',
@@ -529,9 +551,9 @@ const partName=p=>(PARTS.find(x=>x[0]===p)||[,''])[1];
 const defSettings=()=>({partTimes:{sabah:'08:00',ogle:'12:30',aksam:'19:00'},showRoutines:true,eodTime:'21:30',eowDay:6,eowTime:'20:00',taskLead:10,sync:{cats:{tasks:true,routines:true,logs:true,chains:true,timers:false},auto:false,last:null}});
 const SB_URL='https://tlxgrrrnpzhgviashxgn.supabase.co';
 const SB_KEY='sb_publishable_PzH8fyI5qyCTQhyKe-ZKDw_dBqA3IsS';
-const COLL={t:'tasks',r:'routines',p:'projects',c:'notes'};
-const KIND={t:'task',r:'routine',p:'project',c:'note'};
-const emptyState=()=>({tasks:{},routines:{},projects:{},notes:{},settings:defSettings()});
+const COLL={t:'tasks',r:'routines',p:'projects',c:'notes',m:'meals'};
+const KIND={t:'task',r:'routine',p:'project',c:'note',m:'meal'};
+const emptyState=()=>({tasks:{},routines:{},projects:{},notes:{},meals:{},settings:defSettings()});
 let S=ls.get('halka-cache',null)||emptyState();
 for(const k of Object.values(COLL))S[k]=S[k]||{};
 S.settings=Object.assign(defSettings(),S.settings||{});
@@ -769,9 +791,9 @@ function renderClocks(){
 let VERSION=0;
 
 /* ============ render shell ============ */
-const TABS=[['today','Bugün',IC.today],['all','Görevler',IC.list],['projects','Projeler',IC.folder],['plan','Plan',IC.plan],['routines','Rutinler',IC.chain],['more','Daha',IC.dots]];
-const TAB_NAMES={all:'Görevler',projects:'Projeler',plan:'Plan',routines:'Rutinler'};
-const SECS={clocks:'Geri sayım sayaçları',motiv:'Günün halkası',banners:'Uyarılar',untimed:'Saati belirsiz',parts:'Sabah · Öğle · Akşam',timeline:'Saat çizelgesi',inbox:'Planlanmamış görevler',doneList:'Tamamlananlar'};
+const TABS=[['today','Bugün',IC.today],['all','Görevler',IC.list],['projects','Projeler',IC.folder],['plan','Plan',IC.plan],['routines','Rutinler',IC.chain],['meals','Yemek',IC.food],['more','Daha',IC.dots]];
+const TAB_NAMES={all:'Görevler',projects:'Projeler',plan:'Plan',routines:'Rutinler',meals:'Yemek'};
+const SECS={clocks:'Geri sayım sayaçları',motiv:'Günün halkası',banners:'Uyarılar',untimed:'Saati belirsiz',parts:'Sabah · Öğle · Akşam',timeline:'Saat çizelgesi',inbox:'Planlanmamış görevler',doneList:'Tamamlananlar',meals:'Bugünün yemekleri'};
 const hiddenTabs=()=>S.settings.hiddenTabs||[];
 const hiddenSecs=()=>S.settings.hiddenSecs||[];
 const secOn=k=>!hiddenSecs().includes(k);
@@ -787,7 +809,7 @@ function render(){
   $('#tabbar').style.gridTemplateColumns=`repeat(${vis.length},1fr)`;
   $('#tabbar').innerHTML=vis.map(([k,l,i])=>`<button data-tab="${k}" ${k!=='today'&&k!=='more'?`data-lp="tab:${k}"`:''} aria-current="${cur===k}">${i}<span>${l}</span></button>`).join('');
   $('#clocks').hidden=!secOn('clocks');
-  const v={more:viewMore,today:viewToday,all:viewAll,projects:viewProjects,matrix:viewMatrix,plan:viewPlan,routines:viewRoutines,matrix:viewMatrix,settings:viewSettings}[UI.tab]||viewToday;
+  const v={meals:viewMeals,more:viewMore,today:viewToday,all:viewAll,projects:viewProjects,matrix:viewMatrix,plan:viewPlan,routines:viewRoutines,matrix:viewMatrix,settings:viewSettings}[UI.tab]||viewToday;
   $('#view').innerHTML=v();
   renderClocks();
 }
@@ -901,6 +923,7 @@ function viewToday(){
   ${secOn('parts')?partSecs:''}
   ${secOn('timeline')?`<div class="sec" data-lp="sec:timeline"><h2>Saat çizelgesi</h2><button class="add" data-act="newTask" data-scope="day" data-date="${k}" data-timed="1">+ Saatli görev</button></div>
   <div class="list">${tl||'<div class="empty">Saat verilmiş bir şey yok. Bir göreve saat ve süre verince burada sıralanır.</div>'}</div>`:''}
+  ${secOn('meals')&&isToday?todayMealsCard():''}
   ${secOn('inbox')&&inbox.length?`<div class="sec" data-lp="sec:inbox"><h2>Planlanmamış görevler</h2><button class="add" data-tab="all">Tümünü gör</button></div><div class="list">${inbox.map(t=>taskRow(t)).join('')}</div>`:''}
   ${secOn('doneList')&&doneT.length?`<div class="sec" data-lp="sec:doneList"><h2>Tamamlananlar (${doneT.length})</h2></div><div class="list">${doneT.map(t=>taskRow(t)).join('')}</div>`:''}
   `;
@@ -1248,9 +1271,10 @@ function teSave(){
 let RE=null;
 function newRoutineObj(){return {id:uid(),name:'',color:COLORS[routinesArr().length%COLORS.length],type:'daily_count',target:1,days:[0,2,4],mdays:[1,15],every:2,ydates:[],start:dk(today()),time:null,dur:null,deduct:false,reminders:{times:[],eod:true,eow:false,days:[]},log:{},kept:[],broken:[],paused:false,created:Date.now()}}
 function openRoutine(r,isNew){
-  RE=structuredClone(r);RE.parts=RE.parts||[];RE.reminders=Object.assign({times:[],eod:false,eow:false,days:[]},RE.reminders||{});
+  RE=structuredClone(r);RE._new=!!isNew;RE.parts=RE.parts||[];RE.reminders=Object.assign({times:[],eod:false,eow:false,days:[]},RE.reminders||{});
   openSheet(`${shead(isNew?'Yeni rutin':'Rutini düzenle')}
-    <label class="f">Rutin adı<input class="inp" id="re-name" value="${esc(RE.name)}" placeholder="örn. 20 dk İngilizce okuma"></label>
+    <label class="f">Rutin adı<input class="inp" id="re-name" value="${esc(RE.name)}" placeholder="örn. Diş fırçala, kitap oku, spor" autocomplete="off"></label>
+    <div id="re-sug"></div>
     <div class="swatches">${COLORS.map(c=>`<button style="--c:${c}" data-act="reColor" data-c="${c}" aria-pressed="${RE.color===c}" aria-label="Renk"></button>`).join('')}</div>
     <div class="typegrid" id="re-types">${Object.entries(RT).map(([k,t])=>`<button data-act="reType" data-k="${k}" aria-pressed="${RE.type===k}"><small>${t.g}</small>${t.l}</button>`).join('')}</div>
     <div id="re-params"></div>
@@ -1272,7 +1296,7 @@ function openRoutine(r,isNew){
     <label class="f">Başlangıç<input class="inp" type="date" id="re-start" value="${RE.start}"></label>
     ${!isNew?`<label class="toggle"><input type="checkbox" id="re-paused" ${RE.paused?'checked':''}><span>Rutini durdur (zincir beklemede kalır)</span></label>`:''}
     <div class="btns"><button class="btn pri grow" data-act="reSave">Kaydet</button>${!isNew?`<button class="btn danger" data-act="reDelete">Sil</button>`:''}</div>
-    <div id="re-confirm"></div>`,()=>{reParams();reTimes();if(isNew)setTimeout(()=>$('#re-name').focus(),60)});
+    <div id="re-confirm"></div>`,()=>{reParams();reTimes();reSugRender();let st=null;$('#re-name').addEventListener('input',()=>{clearTimeout(st);st=setTimeout(reSugRender,250)});if(isNew&&!RE._applied)setTimeout(()=>$('#re-name').focus(),60)});
 }
 function reParams(){
   const el=$('#re-params');if(!el)return;const t=RE.type;let h='';
@@ -1303,6 +1327,7 @@ function reSave(){
   if(RE.type==='weekly_days'&&!RE.days.length){toast('En az bir gün seç');return}
   if(RE.type==='monthly_days'&&!RE.mdays.length){toast('Ayın en az bir gününü seç');return}
   if(RE.type==='yearly_dates'&&!RE.ydates.length){toast('En az bir tarih ekle');return}
+  delete RE._new;delete RE._applied;
   S.routines[RE.id]=RE;persist('r',RE.id);closeSheet();render();toast('Rutin kaydedildi');
 }
 
@@ -1451,6 +1476,21 @@ document.addEventListener('click',e=>{
     case 'clockinfo':openClockInfo(el.dataset.k);break;
     /* quick add */
     case 'qaClose':closeQuick();break;
+    case 'reSugApply':applySug(RSUG[+el.dataset.i],false);break;
+    case 'reSugPick':{const sg=RSUG[+el.dataset.i];$('#re-name').value=sg.n;applySug(sg,true);break}
+    case 'mealMode':UI.mealMode=el.dataset.m;render();break;
+    case 'mealNav':{const d=pd(UI.mealAnchor||dk(today())),n=+el.dataset.n;UI.mealAnchor=dk((UI.mealMode||'week')==='week'?addD(d,7*n):new Date(d.getFullYear(),d.getMonth()+n,1));render();break}
+    case 'mealOpenWeek':UI.mealMode='week';UI.mealAnchor=el.dataset.k;render();window.scrollTo(0,0);break;
+    case 'mealAdd':openMeal(el.dataset.k,el.dataset.s,null);break;
+    case 'mealEdit':openMeal(el.dataset.k,el.dataset.s,id);break;
+    case 'mealPickName':$('#me-name').value=el.dataset.n;if(el.dataset.ing&&!$('#me-ing').value)$('#me-ing').value=el.dataset.ing;break;
+    case 'meDay':el.setAttribute('aria-pressed',el.getAttribute('aria-pressed')!=='true');break;
+    case 'mealSave':mealSave();break;
+    case 'mealDel':{const {k,slot,itemId,day}=ME;day.slots[slot]=(day.slots[slot]||[]).filter(x=>x.id!==itemId);saveMealDay(k,day);closeSheet();render();toast('Silindi');break}
+    case 'mealCopyWeek':mealCopyWeek();break;
+    case 'mealShop':openShop();break;
+    case 'shopRange':SHOP.range=el.dataset.k;openShop();break;
+    case 'shopToNotes':shopToNotes();break;
     case 'lpHideTab':{const k=el.dataset.k;S.settings.hiddenTabs=[...new Set([...hiddenTabs(),k])];persist('s');closeSheet();if(UI.tab===k)UI.tab='today';render();toast('Gizlendi · Daha sekmesinden geri getirebilirsin');break}
     case 'lpHideSec':{const k=el.dataset.k;S.settings.hiddenSecs=[...new Set([...hiddenSecs(),k])];persist('s');closeSheet();render();toast('Gizlendi · Daha sekmesinden geri getirebilirsin');break}
     case 'unhideTab':S.settings.hiddenTabs=hiddenTabs().filter(x=>x!==el.dataset.k);persist('s');render();break;
@@ -1544,7 +1584,7 @@ document.addEventListener('click',e=>{
     case 'copyPack':copyText(JSON.stringify(buildPack(),null,1),'Senkron paketi panoya kopyalandı');break;
     case 'exportData':copyText(JSON.stringify(S),'Yedek panoya kopyalandı. Güvenli bir yere yapıştır.');break;
     case 'importData':openSheet(`${shead('Yedekten geri yükle')}<textarea class="inp code" id="imp" placeholder="Yedek metnini buraya yapıştır"></textarea><div class="small muted">Mevcut veriler yedekteki görev ve rutinlerle birleştirilir; aynı olanların yerine yedektekiler geçer.</div><button class="btn pri" data-act="importDo">Geri yükle</button>`);break;
-    case 'importDo':try{const v=JSON.parse($('#imp').value);for(const [k,t] of Object.entries(v.tasks||{})){S.tasks[k]=t;persist('t',k)}for(const [k,r] of Object.entries(v.routines||{})){S.routines[k]=r;persist('r',k)}for(const [k,r] of Object.entries(v.projects||{})){S.projects[k]=r;persist('p',k)}for(const [k,r] of Object.entries(v.notes||{})){S.notes[k]=r;persist('c',k)}closeSheet();render();toast('Yedek geri yüklendi')}catch(err){toast('Metin okunamadı. Yedeğin tamamını yapıştırdığından emin ol.')}break;
+    case 'importDo':try{const v=JSON.parse($('#imp').value);for(const [k,t] of Object.entries(v.tasks||{})){S.tasks[k]=t;persist('t',k)}for(const [k,r] of Object.entries(v.routines||{})){S.routines[k]=r;persist('r',k)}for(const [k,r] of Object.entries(v.projects||{})){S.projects[k]=r;persist('p',k)}for(const [k,r] of Object.entries(v.notes||{})){S.notes[k]=r;persist('c',k)}for(const [k,r] of Object.entries(v.meals||{})){S.meals[k]=r;persist('m',k)}closeSheet();render();toast('Yedek geri yüklendi')}catch(err){toast('Metin okunamadı. Yedeğin tamamını yapıştırdığından emin ol.')}break;
     case 'askNotif':if('Notification' in window){Notification.requestPermission().then(p=>{render();toast(p==='granted'?'Bildirimler açık':'Bildirim izni verilmedi')}).catch(()=>toast('Bildirim izni alınamadı'))}else toast('Bu cihaz bildirimleri desteklemiyor. iPhone ve iPad\'de önce uygulamayı ana ekrana ekle.');break;
     case 'authMode':showAuth(el.dataset.m);break;
     case 'localMode':MODE='local';ls.set('halka-localmode',true);hideAuth();render();break;
@@ -1948,6 +1988,176 @@ function viewMore(){
     <button data-act="openDrawer">${IC.note.replace('<svg','<svg width="20" height="20"')} Aklımdakiler</button>
     <button data-tab="settings">${IC.gear.replace('<svg','<svg width="20" height="20"')} Ayarlar · eşitleme, hatırlatıcılar, yedek</button>
   </div>`;
+}
+
+/* ============ ROUTINE SUGGESTIONS ============ */
+const RSUG=[
+ {n:'Diş fırçala',k:['diş','dis fırç','dis firc'],o:{type:'daily_count',target:2,parts:['sabah','aksam'],dur:3},rem:{parts:true},d:'Günde 2 kez · sabah ve akşam · 3 dk',tip:'Sabah kahvaltıdan sonra, akşam yatmadan önce; ikisi ayrı halka olarak işaretlenir.'},
+ {n:'Kitap oku',k:['kitap','okuma','roman'],o:{type:'daily_duration',target:20,parts:['aksam'],dur:20},rem:{parts:true},d:'Günde 20 dk · akşam',tip:'Sayfa yerine süreye odaklanmak alışkanlığı kolaylaştırır.'},
+ {n:'Spor',k:['spor','egzersiz','antrenman','gym','fitness','pilates','yoga','salon'],o:{type:'weekly_count',target:3,dur:45},rem:{eow:true},d:'Haftada 3 kez · 45 dk',tip:'Günler esnek kalır; hafta sonunda eksikse hatırlatır.'},
+ {n:'Yürüyüş',k:['yürüyüş','yuruyus','yürü','koşu','kosu'],o:{type:'daily_duration',target:30,dur:30},rem:{eod:true},d:'Günde 30 dk',tip:'Parça parça da olur; her yürüyüşü dakika olarak ekle.'},
+ {n:'Su iç',k:['su iç','su ic','bardak su'],w:['su'],o:{type:'daily_count',target:8,parts:['sabah','ogle','aksam']},rem:{parts:true},d:'Günde 8 bardak · sabah, öğle, akşam',tip:'Her bölümde ayrı halka çıkar; gün içinde dağıtır.'},
+ {n:'Meditasyon',k:['meditasyon','nefes','farkındalık'],o:{type:'daily_duration',target:10,parts:['sabah'],dur:10},rem:{parts:true},d:'Günde 10 dk · sabah',tip:'Güne başlarken kısa ve sabit bir saatte daha kolay oturur.'},
+ {n:'İngilizce çalış',k:['ingilizce','dil çalış','kelime','almanca','ispanyolca'],o:{type:'daily_duration',target:20,dur:20},rem:{eod:true},d:'Günde 20 dk',tip:'Kısa ama her gün; zincir burada en çok işe yarar.'},
+ {n:'Vitamin',k:['vitamin','takviye','ilaç','ilac'],o:{type:'daily_count',target:1,parts:['sabah']},rem:{parts:true},d:'Günde 1 kez · sabah',tip:'Kahvaltı gibi her gün yaptığın bir şeye bağla.'},
+ {n:'Cilt bakımı',k:['cilt','yüz bakım','bakım rutini'],o:{type:'daily_count',target:2,parts:['sabah','aksam'],dur:5},rem:{parts:true},d:'Günde 2 kez · sabah ve akşam',tip:'Sabah ve akşam ayrı halka olarak işaretlenir.'},
+ {n:'Erken yat',k:['uyku','erken yat','yatış'],o:{type:'daily_count',target:1,time:'23:30'},rem:{times:['23:00']},d:'Her gün 23:30 · 23:00’te hatırlatma',tip:'Hatırlatma yarım saat önce gelir; ekranı bırakma zamanı.'},
+ {n:'Ev temizliği',k:['temizlik','süpür','ev işi','toz al'],o:{type:'weekly_count',target:1,dur:60},rem:{eow:true},d:'Haftada 1 kez · 60 dk',tip:'Hafta içinde istediğin gün yaparsın.'},
+ {n:'Çamaşır',k:['çamaşır','camasir','ütü','utu'],o:{type:'weekly_count',target:2,dur:20},rem:{eow:true},d:'Haftada 2 kez'},
+ {n:'Ailemi ara',k:['annemi','babamı','babami','ailemi','kardeşimi','kardesimi','ara '],o:{type:'weekly_count',target:2,dur:15},rem:{eow:true},d:'Haftada 2 kez · 15 dk',tip:'Hafta sonuna kadar yapılmadıysa hatırlatır.'},
+ {n:'Fatura öde',k:['fatura','kira','ödeme','odeme','aidat'],o:{type:'monthly_days',mdays:[5]},rem:{times:['10:00']},d:'Her ayın 5’i · 10:00',tip:'Günü ihtiyacına göre değiştir.'},
+ {n:'Makale oku',k:['makale','literatür','literatur','pubmed','uptodate'],o:{type:'weekly_count',target:3,dur:30},rem:{eow:true},d:'Haftada 3 kez · 30 dk',tip:'Nöbet haftalarında esneklik için haftalık hedef.'},
+ {n:'Günlük yaz',k:['günlük','gunluk','journal','not yaz'],o:{type:'daily_duration',target:10,parts:['aksam'],dur:10},rem:{parts:true},d:'Günde 10 dk · akşam'},
+ {n:'Çiçek sula',k:['çiçek','cicek','bitki','sula'],o:{type:'every_n_days',every:3},rem:{times:['09:00']},d:'3 günde bir · 09:00'},
+ {n:'Kahvaltı yap',k:['kahvaltı','kahvalti'],o:{type:'daily_count',target:1,parts:['sabah']},rem:{parts:true},d:'Her sabah'},
+];
+const trLow=s=>(s||'').toLocaleLowerCase('tr');
+function findSug(name){
+  const n=' '+trLow(name)+' ';if(n.trim().length<2)return null;
+  for(const sg of RSUG){
+    if(sg.k.some(k=>n.includes(trLow(k))))return sg;
+    if((sg.w||[]).some(w=>new RegExp('(^|\\s)'+w+'(\\s|$)').test(n.trim())))return sg;
+  }
+  return null;
+}
+function reSugRender(){
+  const el=$('#re-sug');if(!el)return;
+  const name=$('#re-name')?.value||'',sg=findSug(name);
+  if(!sg){el.innerHTML=RE._new&&!name.trim()?`<div class="small muted" style="margin-bottom:6px">Hazır rutinler</div><div class="chips">${RSUG.slice(0,10).map((s,i)=>`<button class="chip" data-act="reSugPick" data-i="${i}">${s.n}</button>`).join('')}</div>`:'';return}
+  const i=RSUG.indexOf(sg);
+  el.innerHTML=`<div class="sugcard"><div style="flex:1;min-width:0"><div class="small muted">Öneri</div><div style="font-weight:700">${sg.d}</div>${sg.tip?`<div class="small muted">${sg.tip}</div>`:''}</div><button class="btn pri" data-act="reSugApply" data-i="${i}">Uygula</button></div>`;
+}
+function applySug(sg,setName){
+  try{reCollect()}catch(e){}
+  if(setName&&!RE.name)RE.name=sg.n;
+  Object.assign(RE,structuredClone(sg.o));
+  if(!sg.o.parts)RE.parts=[];
+  if(!sg.o.time)RE.time=null;
+  RE.deduct=false;
+  RE.reminders=Object.assign({times:[],eod:false,eow:false,days:[],parts:false},sg.rem||{});
+  RE._applied=true;
+  openRoutine(RE,RE._new);
+  toast('Öneri uygulandı · istediğin gibi değiştirebilirsin');
+}
+
+/* ============ MEAL PLANNER ============ */
+const MEAL_SLOTS=[['kahvalti','Kahvaltı'],['ogle','Öğle'],['aksam','Akşam'],['ara','Ara öğün']];
+const mealDay=k=>S.meals[k]||{date:k,slots:{}};
+const mealItems=(k,slot)=>(mealDay(k).slots||{})[slot]||[];
+function mealNameStats(){const m={};for(const d of Object.values(S.meals))for(const arr of Object.values(d.slots||{}))for(const it of arr){const n=it.name.trim();if(!n)continue;const key=trLow(n);m[key]=m[key]||{name:n,c:0,ing:''};m[key].c++;if(it.ing)m[key].ing=it.ing}return Object.values(m).sort((a,b)=>b.c-a.c)}
+function saveMealDay(k,day){
+  const empty=!Object.values(day.slots||{}).some(a=>a&&a.length);
+  if(empty){delete S.meals[k]}else{day.date=k;S.meals[k]=day}
+  persist('m',k);
+}
+function mealSummary(k){return MEAL_SLOTS.map(([s,l])=>{const it=mealItems(k,s);return it.length?`<span class="ms-slot"><b>${l[0]}</b> ${esc(it.map(x=>x.name).join(', '))}</span>`:''}).filter(Boolean).join('')}
+function viewMeals(){
+  const mode=UI.mealMode||'week',a=pd(UI.mealAnchor||dk(today())),t0=dk(today());
+  const seg=`<div class="seg">${[['week','Hafta'],['month','Ay']].map(([k,l])=>`<button aria-pressed="${mode===k}" data-act="mealMode" data-m="${k}">${l}</button>`).join('')}</div>`;
+  let title,body;
+  if(mode==='week'){
+    const w0=monday(a);title=`${fmtDay(w0)} – ${fmtDay(addD(w0,6))}`;
+    body=Array.from({length:7},(_,i)=>{
+      const d=addD(w0,i),k=dk(d);
+      return `<div class="mealday ${k===t0?'today':''} ${k<t0?'past':''}">
+        <div class="mdh"><b>${DAYS_L[i]}</b><span class="muted small">${fmtDay(d)}</span></div>
+        ${MEAL_SLOTS.map(([s,l])=>`<div class="mslot"><span class="mlabel">${l}</span><div class="mitems">${mealItems(k,s).map(it=>`<button class="mchip" data-act="mealEdit" data-k="${k}" data-s="${s}" data-id="${it.id}">${esc(it.name)}</button>`).join('')}<button class="madd" data-act="mealAdd" data-k="${k}" data-s="${s}" aria-label="${l} ekle">+</button></div></div>`).join('')}
+      </div>`;
+    }).join('');
+    body=`<div class="btns" style="margin-bottom:12px"><button class="btn" data-act="mealCopyWeek">Geçen haftayı kopyala</button><button class="btn" data-act="mealShop">Alışveriş listesi</button></div><div class="list">${body}</div>`;
+  }else{
+    const y=a.getFullYear(),m=a.getMonth();title=`${MON[m]} ${y}`;
+    const n=daysIn(y,m);
+    body=`<div class="btns" style="margin-bottom:12px"><button class="btn" data-act="mealShop">Alışveriş listesi</button></div><div class="mmonth">${Array.from({length:n},(_,i)=>{const d=new Date(y,m,i+1),k=dk(d),sum=mealSummary(k);return `<button class="mrow ${k===t0?'today':''}" data-act="mealOpenWeek" data-k="${k}"><span class="mdate"><b>${i+1}</b><small>${DAYS[wdi(d)]}</small></span><span class="msum">${sum||'<span class="muted">Plan yok</span>'}</span></button>`}).join('')}</div>`;
+  }
+  const filled=Object.keys(S.meals).filter(k=>k>=t0).sort();
+  const ahead=filled.length?Math.round((pd(filled[filled.length-1])-today())/864e5)+1:0;
+  return `<div class="head"><h1>Yemek planı</h1>${seg}</div>
+  <div class="head" style="margin-top:-4px"><button class="iconbtn" data-act="mealNav" data-n="-1" aria-label="Önceki">${IC.left}</button><span style="flex:1;font-weight:700;text-align:center">${title}</span><button class="iconbtn" data-act="mealNav" data-n="1" aria-label="Sonraki">${IC.right}</button></div>
+  ${ahead?`<div class="small muted" style="margin:-4px 0 10px">${ahead} gün ilerisine kadar planın var.</div>`:'<div class="small muted" style="margin:-4px 0 10px">Bir öğüne + ile yemek ekle; bir aya kadar önceden planlayabilirsin.</div>'}
+  ${body}`;
+}
+let ME=null;
+function openMeal(k,slot,itemId){
+  const day=structuredClone(mealDay(k));day.slots=day.slots||{};
+  const it=itemId?(day.slots[slot]||[]).find(x=>x.id===itemId):null;
+  ME={k,slot,itemId,day};
+  const w0=monday(pd(k)),stats=mealNameStats().slice(0,12);
+  openSheet(`${shead(it?'Yemeği düzenle':'Yemek ekle')}
+    <div class="small muted" style="margin-top:-6px">${fmtDay(pd(k))} ${DAYS_L[wdi(pd(k))]} · ${MEAL_SLOTS.find(x=>x[0]===slot)[1]}</div>
+    <input class="inp big" id="me-name" value="${esc(it?.name||'')}" placeholder="örn. Mercimek çorbası" autocomplete="off" enterkeyhint="done">
+    ${stats.length?`<div class="chips" id="me-sugs">${stats.map(s=>`<button class="chip" data-act="mealPickName" data-n="${esc(s.name)}" data-ing="${esc(s.ing||'')}">${esc(s.name)}</button>`).join('')}</div>`:''}
+    <label class="f">Malzemeler (isteğe bağlı, virgülle)<textarea class="inp" id="me-ing" rows="2" placeholder="mercimek, soğan, havuç">${esc(it?.ing||'')}</textarea></label>
+    ${!it?`<div><div class="small muted" style="margin-bottom:6px">Bu haftanın şu günlerine de ekle</div><div class="wdpick" id="me-days">${DAYS.map((x,i)=>{const dd=dk(addD(w0,i));return `<button data-act="meDay" data-k="${dd}" aria-pressed="${dd===k}" ${dd===k?'disabled':''}>${x}</button>`}).join('')}</div></div>`:''}
+    <div class="btns"><button class="btn pri grow" data-act="mealSave">Kaydet</button>${it?'<button class="btn danger" data-act="mealDel">Sil</button>':''}</div>`,sh=>{
+      const i=sh.querySelector('#me-name');setTimeout(()=>i.focus(),60);
+      i.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();mealSave()}});
+    });
+}
+function mealSave(){
+  const name=$('#me-name').value.trim();if(!name){$('#me-name').focus();return}
+  const ing=$('#me-ing').value.trim();
+  const {k,slot,itemId}=ME;
+  const targets=[k,...[...document.querySelectorAll('#me-days button[aria-pressed="true"]')].map(b=>b.dataset.k).filter(x=>x!==k)];
+  for(const dk_ of targets){
+    const day=dk_===k?ME.day:structuredClone(mealDay(dk_));day.slots=day.slots||{};
+    const arr=day.slots[slot]=day.slots[slot]||[];
+    if(itemId&&dk_===k){const it=arr.find(x=>x.id===itemId);if(it){it.name=name;it.ing=ing}}
+    else arr.push({id:uid(),name,ing});
+    saveMealDay(dk_,day);
+  }
+  closeSheet();render();toast(targets.length>1?`${targets.length} güne eklendi`:'Kaydedildi');
+}
+function mealCopyWeek(){
+  const w0=monday(pd(UI.mealAnchor||dk(today())));let n=0;
+  for(let i=0;i<7;i++){
+    const k=dk(addD(w0,i)),src=mealDay(dk(addD(w0,i-7))),day=structuredClone(mealDay(k));day.slots=day.slots||{};
+    for(const [s] of MEAL_SLOTS){const from=(src.slots||{})[s]||[];if(from.length&&!(day.slots[s]||[]).length){day.slots[s]=from.map(x=>({id:uid(),name:x.name,ing:x.ing||''}));n++}}
+    saveMealDay(k,day);
+  }
+  render();toast(n?`${n} öğün kopyalandı (dolu öğünlere dokunulmadı)`:'Geçen hafta kopyalanacak öğün yok');
+}
+let SHOP={range:'week'};
+function shopRange(r){
+  const t0=today(),a=pd(UI.mealAnchor||dk(t0));
+  if(r==='week'){const w=monday(a);return [w,addD(w,6)]}
+  if(r==='next'){const w=addD(monday(a),7);return [w,addD(w,6)]}
+  if(r==='2w'){return [t0,addD(t0,13)]}
+  return [t0,addD(t0,29)];
+}
+function shopItems(r){
+  const [a,b]=shopRange(r),ing=new Map(),noIng=new Set();
+  for(let d=new Date(a);d<=b;d=addD(d,1)){
+    const day=mealDay(dk(d));
+    for(const arr of Object.values(day.slots||{}))for(const it of arr){
+      const parts=(it.ing||'').split(/[,\n]/).map(x=>x.trim()).filter(Boolean);
+      if(!parts.length)noIng.add(it.name);
+      for(const p of parts){const key=trLow(p);if(!ing.has(key))ing.set(key,p)}
+    }
+  }
+  return {a,b,ing:[...ing.values()],noIng:[...noIng]};
+}
+function openShop(){
+  const r=SHOP.range,x=shopItems(r);
+  const ranges=[['week','Bu hafta'],['next','Gelecek hafta'],['2w','2 hafta'],['month','30 gün']];
+  openSheet(`${shead('Alışveriş listesi')}
+    <div class="chips">${ranges.map(([k,l])=>`<button class="chip" data-act="shopRange" data-k="${k}" aria-pressed="${r===k}">${l}</button>`).join('')}</div>
+    <div class="small muted">${fmtDay(x.a)} – ${fmtDay(x.b)}</div>
+    ${x.ing.length?`<div class="nlist">${x.ing.map(i=>`<div class="nitem"><span class="ntext">${esc(i)}</span></div>`).join('')}</div>`:'<div class="empty">Bu aralıkta malzeme girilmiş yemek yok.</div>'}
+    ${x.noIng.length?`<div class="small muted">Malzemesi girilmemiş: ${esc(x.noIng.join(', '))}</div>`:''}
+    ${x.ing.length?'<button class="btn pri" data-act="shopToNotes">Aklımdakiler’e ekle</button>':''}`);
+}
+function shopToNotes(){
+  const x=shopItems(SHOP.range);if(!x.ing.length)return;
+  const g={id:uid(),text:`Alışveriş · ${fmtDay(x.a)} – ${fmtDay(x.b)}`,done:false,created:Date.now(),parentId:null};
+  S.notes[g.id]=g;persist('c',g.id);
+  x.ing.forEach((t,i)=>{const n={id:uid(),text:t,done:false,created:Date.now()+i,parentId:g.id};S.notes[n.id]=n;persist('c',n.id)});
+  closeSheet();toast('Alışveriş listesi Aklımdakiler’e eklendi');openDrawer();
+}
+function todayMealsCard(){
+  const k=dk(today()),has=MEAL_SLOTS.some(([s])=>mealItems(k,s).length);
+  return `<div class="sec" data-lp="sec:meals"><h2>Bugünün yemekleri</h2><button class="add" data-tab="meals">Plan</button></div>
+  ${has?`<div class="mealtoday">${MEAL_SLOTS.map(([s,l])=>{const it=mealItems(k,s);return it.length?`<div><span class="mlabel">${l}</span> ${esc(it.map(x=>x.name).join(', '))}</div>`:''}).join('')}</div>`:`<button class="empty" style="width:100%;text-align:left;background:none" data-tab="meals">Bugün için yemek planı yok. Planlamak için dokun.</button>`}`;
 }
 
 /* ============ toast / fx ============ */
