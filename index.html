@@ -500,7 +500,9 @@ async function boot(){
     if(ev==='PASSWORD_RECOVERY'){showAuth('reset');return}
     if((u?.id||null)!==(USER?.id||null)){USER=u;onUser()}
   });
-  const {data}=await sb.auth.getSession();
+  let {data}=await sb.auth.getSession();
+  let fresh=false;try{fresh=!sessionStorage.getItem('halka-open');sessionStorage.setItem('halka-open','1')}catch(e){}
+  if(data?.session&&fresh&&ls.get('halka-remember',true)===false){await sb.auth.signOut();data=null}
   USER=data?.session?.user||null;
   if(!USER&&ls.get('halka-localmode',false))MODE='local';
   onUser();
@@ -518,8 +520,9 @@ function showAuth(mode){
     <div class="brand" style="padding:0">${brandSvg()}Halka</div>
     <h1 style="font-size:26px">${titles[AUTH_MODE]}</h1>
     <p class="sub" style="margin:0">${AUTH_MODE==='up'?'Bir kez hesap açınca telefon, tablet ve bilgisayarda aynı planı görürsün.':AUTH_MODE==='forgot'?'E-postana sıfırlama bağlantısı göndereceğiz.':AUTH_MODE==='reset'?'Hesabın için yeni bir şifre yaz.':'Telefonda, tablette ve bilgisayarda aynı hesapla gir.'}</p>
-    ${AUTH_MODE!=='reset'?`<label class="f">E-posta<input class="inp" id="au-email" type="email" autocomplete="email" required></label>`:''}
-    ${AUTH_MODE!=='forgot'?`<label class="f">Şifre<input class="inp" id="au-pass" type="password" autocomplete="${AUTH_MODE==='in'?'current-password':'new-password'}" minlength="6" required></label>`:''}
+    ${AUTH_MODE!=='reset'?`<label class="f">E-posta<input class="inp" id="au-email" name="email" type="email" autocomplete="username email" value="${esc(ls.get('halka-lastemail',''))}" required></label>`:''}
+    ${AUTH_MODE!=='forgot'?`<label class="f">Şifre<input class="inp" id="au-pass" name="password" type="password" autocomplete="${AUTH_MODE==='in'?'current-password':'new-password'}" minlength="6" required></label>`:''}
+    ${AUTH_MODE==='in'||AUTH_MODE==='up'?`<label class="toggle"><input type="checkbox" id="au-remember" ${ls.get('halka-remember',true)!==false?'checked':''}><span>Beni hatırla</span></label>`:''}
     <div class="err" id="au-err"></div>
     <button class="btn pri" type="submit" id="au-submit">${titles[AUTH_MODE]}</button>
     <div class="btns" style="justify-content:space-between">
@@ -541,6 +544,8 @@ async function authSubmit(e){
   try{
     const redirect=location.origin+location.pathname;
     let r;
+    const rem=$('#au-remember');if(rem)ls.set('halka-remember',rem.checked);
+    if(email)ls.set('halka-lastemail',email);
     if(AUTH_MODE==='in')r=await sb.auth.signInWithPassword({email,password:pass});
     if(AUTH_MODE==='up'){r=await sb.auth.signUp({email,password:pass,options:{emailRedirectTo:redirect}});if(!r.error&&!r.data.session){err.style.color='var(--teal)';err.textContent='Onay e-postası gönderildi. Bağlantıya dokunduktan sonra buradan giriş yap.';AUTH_MODE='in';btn.disabled=false;return}}
     if(AUTH_MODE==='forgot'){r=await sb.auth.resetPasswordForEmail(email,{redirectTo:redirect});if(!r.error){err.style.color='var(--teal)';err.textContent='Sıfırlama bağlantısı e-postana gönderildi.';btn.disabled=false;return}}
