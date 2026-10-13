@@ -398,7 +398,7 @@ textarea.inp{min-height:64px;resize:vertical}
 <button class="dhandle" id="dhandle" data-act="openDrawer" aria-label="Aklımdakiler listesini aç"></button>
 <script src="supabase.js"></script>
 <script>
-const APP_VERSION='2.0';
+const APP_VERSION='2.0.1';
 /* ============ utilities ============ */
 const pad=n=>String(n).padStart(2,'0');
 const dk=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -1928,6 +1928,7 @@ function setColor(c,close){
 function viewMore(){
   const ht=hiddenTabs(),hs=hiddenSecs(),c=S.settings.colors||{};
   return `<div class="head"><h1>Daha</h1></div>
+  <div class="card" style="margin-bottom:12px;padding:12px 16px"><div class="small store">${storeText()}</div>${MODE==='db'?`<div class="small muted">${esc(USER?.email||'')}</div>`:''}</div>
   <div class="card">
     <h3>Gizlenenler</h3>
     ${!ht.length&&!hs.length?'<p class="small muted" style="margin:0">Gizlenen bir şey yok. Alttaki bir sekmeye ya da Bugün ekranındaki bir bölüm başlığına basılı tutup “gizle” diyebilirsin.</p>':''}
