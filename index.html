@@ -436,7 +436,7 @@ textarea.inp{min-height:64px;resize:vertical}
 <button class="dhandle" id="dhandle" data-act="openDrawer" aria-label="Aklımdakiler listesini aç"></button>
 <script src="supabase.js"></script>
 <script>
-const APP_VERSION='2.2';
+const APP_VERSION='2.2.1';
 /* ============ utilities ============ */
 const pad=n=>String(n).padStart(2,'0');
 const dk=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -764,12 +764,11 @@ function dayPlanned(d,fromMin){
     if(s==null)loose+=Number(t.dur);else ivs.push([s,s+Number(t.dur)]);
   }
   for(const r of routinesForDay(k)){
-    if(!r.deduct||!r.dur||RT[r.type].p!=='day')continue;
+    if(!routineDeducts(r)||RT[r.type].p!=='day')continue;
     const done=routineDayVal(r,k);
-    let need=r.type==='daily_count'?Math.max(0,target(r)-done)*r.dur:r.type==='daily_duration'?Math.max(0,target(r)-done):(done>=1?0:Number(r.dur));
-    if(r.type==='daily_duration')need=Math.min(need,Number(r.dur)||need);
+    const need=r.type==='daily_count'?Math.max(0,target(r)-done)*Number(r.dur):r.type==='daily_duration'?Math.max(0,target(r)-done):(done>=1?0:Number(r.dur));
     if(!need)continue;
-    const s=toMin(r.time);
+    const s=toMin(r.time||((r.parts||[]).length===1?(S.settings.partTimes||{})[r.parts[0]]:null));
     if(s==null)loose+=need;else ivs.push([s,s+need]);
   }
   ivs.sort((a,b)=>a[0]-b[0]);
@@ -778,8 +777,26 @@ function dayPlanned(d,fromMin){
   if(ce>cs)total+=ce-cs;
   return total+loose;
 }
+const routineDeducts=r=>!r.paused&&r.noDeduct!==true&&(Number(r.dur)>0||r.type==='daily_duration');
+function periodRoutineMinutes(end){
+  const t0=today();let m=0;
+  for(const r of routinesArr()){
+    const p=RT[r.type].p;if(p==='day'||!routineDeducts(r)||!Number(r.dur))continue;
+    if(pd(r.start||dk(t0))>=end)continue;
+    let first=true;
+    for(const key of periodsList(r,t0,addD(end,-1))){
+      const start=key[0]==='W'?pd(key.slice(1)):key[0]==='M'?pd(key.slice(1)+'-01'):new Date(+key.slice(1),0,1);
+      if(start>=end)break;
+      const pEnd=key[0]==='W'?addD(start,6):key[0]==='M'?new Date(start.getFullYear(),start.getMonth()+1,0):new Date(start.getFullYear(),11,31);
+      const done=first?(aggLog(r)[key]||0):0;first=false;
+      if(pEnd>=end)continue;
+      m+=Math.max(0,target(r)-done)*Number(r.dur);
+    }
+  }
+  return m;
+}
 function plannedUntil(end){
-  const now=new Date(),t0=today();let m=0;
+  const now=new Date(),t0=today();let m=periodRoutineMinutes(end);
   const nowMin=now.getHours()*60+now.getMinutes();
   for(let d=new Date(t0);d<end;d=addD(d,1))m+=dayPlanned(d,dk(d)===dk(t0)?nowMin:0);
   for(const t of tasksArr()){
@@ -1317,7 +1334,8 @@ function openRoutine(r,isNew){
     <div><div style="margin-bottom:6px;font-size:12.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Günün bölümü (isteğe bağlı)</div>
     <div class="chips" id="re-parts">${PARTS.map(([k,l])=>`<button class="chip" data-act="rePart" data-k="${k}" aria-pressed="${(RE.parts||[]).includes(k)}">${l}</button>`).join('')}</div>
     <div class="small muted" style="margin-top:6px">Seçince rutin günlük listede o bölümün altında görünür. “Günde birkaç kez” rutinlerinde her bölüm ayrı işaretlenir.</div></div>
-    <label class="toggle"><input type="checkbox" id="re-deduct" ${RE.deduct?'checked':''}><span>Süresini geri sayım sayaçlarından düş</span></label>
+    <label class="toggle"><input type="checkbox" id="re-deduct" ${RE.noDeduct!==true?'checked':''}><span>Süresini geri sayım sayaçlarından düş</span></label>
+    <div class="small muted" id="re-deducthint" style="margin-top:-6px">${RE.type==='daily_duration'?'Günlük hedef dakikası sayaçlardan düşülür.':'Düşülmesi için süre (dk) gir. Haftalık, aylık ve yıllık rutinler o dönemin sayacından düşülür.'}</div>
     <div class="card" style="padding:12px;background:var(--surface2)">
       <div style="display:flex;align-items:center;gap:8px;font-weight:700">${IC.bell.replace('<svg','<svg width="18" height="18"')} Hatırlatıcılar</div>
       <div id="re-times" class="chips"></div>
@@ -1351,7 +1369,7 @@ function reCollect(){
   const ev=$('#re-every');if(ev)RE.every=Math.max(2,Number(ev.value)||2);
   RE.time=$('#re-time').value||null;
   const du=Number($('#re-dur').value);RE.dur=du>0?du:null;
-  RE.deduct=$('#re-deduct').checked;
+  RE.noDeduct=!$('#re-deduct').checked;RE.deduct=!RE.noDeduct;
   RE.reminders.parts=$('#re-rparts').checked;
   RE.reminders.eod=$('#re-eod').checked;RE.reminders.eow=$('#re-eow').checked;
   RE.start=$('#re-start').value||dk(today());
@@ -2083,7 +2101,7 @@ function applySug(sg,setName){
   Object.assign(RE,structuredClone(sg.o));
   if(!sg.o.parts)RE.parts=[];
   if(!sg.o.time)RE.time=null;
-  RE.deduct=false;
+  delete RE.noDeduct;RE.deduct=true;
   RE.reminders=Object.assign({times:[],eod:false,eow:false,days:[],parts:false},sg.rem||{});
   RE._applied=true;
   openRoutine(RE,RE._new);
