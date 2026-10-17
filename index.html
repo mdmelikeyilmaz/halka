@@ -245,9 +245,11 @@ main{padding:12px 16px 110px;max-width:880px;width:100%;margin:0 auto;min-width:
 .clock:first-child{border-left:0;padding-left:0}
 .clock .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600}
 .clock .v{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.clock .s{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clock .s{font-size:11px;color:var(--accent);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .clock .bar{height:3px;border-radius:2px;background:var(--surface2);margin-top:6px;overflow:hidden}
+.clock .bar{display:flex}
 .clock .bar i{display:block;height:100%;background:var(--ink);opacity:.55}
+.clock .bar b{display:block;height:100%;background:var(--accent)}
 @media (max-width:420px){.clock .v{font-size:12.5px;letter-spacing:-.02em}.clock{padding:7px 7px}.clocks{gap:6px}}
 
 /* headings & sections */
@@ -436,7 +438,7 @@ textarea.inp{min-height:64px;resize:vertical}
 <button class="dhandle" id="dhandle" data-act="openDrawer" aria-label="Aklımdakiler listesini aç"></button>
 <script src="supabase.js"></script>
 <script>
-const APP_VERSION='2.2.1';
+const APP_VERSION='2.2.2';
 /* ============ utilities ============ */
 const pad=n=>String(n).padStart(2,'0');
 const dk=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -813,13 +815,13 @@ function renderClocks(){
   if(now-clockCache.at>20000||clockCache.v!==VERSION){clockCache={at:+now,v:VERSION,p:{gun:plannedUntil(ends.gun),hafta:plannedUntil(ends.hafta),ay:plannedUntil(ends.ay),yil:plannedUntil(ends.yil)}}}
   const P=clockCache.p,names={gun:'Gün',hafta:'Hafta',ay:'Ay',yil:'Yıl'};
   $('#clocks').innerHTML=Object.keys(ends).map(k=>{
-    const left=ends[k]-now,tot=ends[k]-starts[k],pct=Math.max(0,Math.min(100,100*left/tot));
+    const left=ends[k]-now,tot=ends[k]-starts[k];
+    const freeMs=Math.max(0,left-P[k]*6e4),pct=Math.max(0,Math.min(100,100*freeMs/tot)),planPct=Math.max(0,Math.min(100,100*(left-freeMs)/tot));
     let v;
-    if(k==='gun'){const s=Math.floor(left/1000);v=`${pad(Math.floor(s/3600))}:${pad(Math.floor(s%3600/60))}:${pad(s%60)}`}
-    else v=`${Math.floor(left/36e5).toLocaleString('tr-TR')} sa`;
-    const free=left/6e4-P[k];
-    const s=P[k]>0?`boş ${k==='gun'?fmtDur(Math.max(0,free)):Math.max(0,Math.floor(free/60)).toLocaleString('tr-TR')+' sa'}`:'planlı süre yok';
-    return `<button class="clock" data-act="clockinfo" data-k="${k}" title="${names[k]} bitimine kalan"><div class="k">${names[k]}</div><div class="v">${v}</div><div class="s">${s}</div><div class="bar"><i style="width:${pct}%"></i></div></button>`;
+    if(k==='gun'){const s=Math.floor(freeMs/1000);v=`${pad(Math.floor(s/3600))}:${pad(Math.floor(s%3600/60))}:${pad(s%60)}`}
+    else v=`${Math.floor(freeMs/36e5).toLocaleString('tr-TR')} sa`;
+    const s=P[k]>0?`−${k==='gun'?(P[k]<60?Math.round(P[k])+' dk':Math.floor(P[k]/60)+':'+pad(Math.round(P[k]%60))+' sa'):Math.round(P[k]/60).toLocaleString('tr-TR')+' sa'} plan`:'plan yok';
+    return `<button class="clock" data-act="clockinfo" data-k="${k}" title="${names[k]}: planlar düşüldükten sonra kalan boş zaman"><div class="k">${names[k]}</div><div class="v">${v}</div><div class="s">${s}</div><div class="bar"><i style="width:${pct}%"></i><b style="width:${planPct}%"></b></div></button>`;
   }).join('');
 }
 let VERSION=0;
@@ -1433,16 +1435,38 @@ function openChains(){
 }
 
 /* clock info */
+function routineStatus(r,k){
+  const p=RT[r.type].p,d=today();
+  if(r.paused)return {ok:false,why:'durdurulmuş'};
+  if(r.noDeduct===true)return {ok:false,why:'“sayaçtan düş” kapalı',fix:'on'};
+  if(!(Number(r.dur)>0)&&r.type!=='daily_duration')return {ok:false,why:'süre girilmemiş',fix:'dur'};
+  if(pd(r.start||dk(d))>d)return {ok:false,why:'henüz başlamadı'};
+  if(p==='day'){
+    if(!dueOnDay(r,d))return {ok:true,why:'bugün yok, ileriki günlerde düşülür',min:0};
+    const done=routineDayVal(r,dk(d));
+    const need=r.type==='daily_count'?Math.max(0,target(r)-done)*Number(r.dur):r.type==='daily_duration'?Math.max(0,target(r)-done):(done>=1?0:Number(r.dur));
+    if(!need)return {ok:true,why:'bugün tamamlandı',min:0};
+    const t=r.time||((r.parts||[]).length===1?(S.settings.partTimes||{})[r.parts[0]]:null);
+    const nowMin=new Date().getHours()*60+new Date().getMinutes();
+    if(t&&toMin(t)+need<=nowMin)return {ok:true,why:`saati (${t}) geçti, bugün düşülmez`,min:0};
+    return {ok:true,why:t?`bugün ${t}`:'bugün, saatsiz',min:need};
+  }
+  return {ok:true,why:`${PNAME[p]}lık · ${PNAME[p]} sayacından düşülür`,min:Math.max(0,target(r)-(aggLog(r)[pkey(r,d)]||0))*Number(r.dur)};
+}
 function openClockInfo(k){
   const t0=today(),now=new Date();
   const ends={gun:addD(t0,1),hafta:addD(monday(t0),7),ay:new Date(t0.getFullYear(),t0.getMonth()+1,1),yil:new Date(t0.getFullYear()+1,0,1)};
   const names={gun:'Gün',hafta:'Hafta',ay:'Ay',yil:'Yıl'};
+  clockCache.at=0;
   const left=(ends[k]-now)/6e4,pl=plannedUntil(ends[k]);
+  const rs=routinesArr();
+  const rows=rs.map(r=>{const st=routineStatus(r,dk(t0));return `<div class="hidrow" style="align-items:flex-start"><span style="font-weight:600;min-width:0">${esc(r.name)}<span class="small ${st.ok?'':'muted'}" style="display:block;font-weight:500;${st.ok?'color:var(--accent)':''}">${st.ok?(st.min?fmtDur(st.min)+' · ':'')+st.why:'Düşülmüyor: '+st.why}</span></span>${st.fix==='dur'?`<input class="inp" type="number" min="5" step="5" placeholder="dk" style="width:76px;padding:8px" id="cd-${r.id}"><button class="btn" style="padding:8px 10px" data-act="clockSetDur" data-id="${r.id}">Ekle</button>`:st.fix==='on'?`<button class="btn" style="padding:8px 10px" data-act="clockDeductOn" data-id="${r.id}">Aç</button>`:''}</div>`}).join('');
   openSheet(`${shead(names[k]+' sayacı')}
     <div class="grid2"><div class="card" style="padding:12px"><div class="small muted">Kalan zaman</div><div class="mono" style="font-size:20px;font-weight:600">${fmtDur(left)}</div></div>
     <div class="card" style="padding:12px"><div class="small muted">Planlı (düşülen)</div><div class="mono" style="font-size:20px;font-weight:600">${fmtDur(pl)}</div></div></div>
     <div class="card" style="padding:12px;background:var(--teal-soft)"><div class="small">Boş kalan</div><div class="mono" style="font-size:24px;font-weight:600">${fmtDur(Math.max(0,left-pl))}</div></div>
-    <p class="small muted" style="margin:0">Sadece “sayaçtan düş” seçili, süre verilmiş ve henüz tamamlanmamış görev ve rutinler düşülür. Aynı saatlere denk gelen işler çakışan kısım bir kez sayılarak düşülür. Geçmiş saatler hesaba katılmaz.</p>`);
+    <div><div class="small muted" style="margin-bottom:4px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Rutinlerin</div>${rows||'<div class="small muted">Henüz rutin yok.</div>'}</div>
+    <p class="small muted" style="margin:0">Süresi olan rutinler ve “sayaçtan düş” seçili görevler düşülür. Aynı saate denk gelenler bir kez sayılır. Sürüm ${APP_VERSION}</p>`);
 }
 
 /* confirm in page */
@@ -1526,9 +1550,11 @@ document.addEventListener('click',e=>{
     case 'selDay':UI.selDay=el.dataset.k;render();break;
     case 'openMonth':UI.planMode='month';UI.planAnchor=el.dataset.k;UI.selDay=el.dataset.k;render();break;
     case 'mx':UI.mxFilter=el.dataset.f;render();break;
-    case 'clockinfo':openClockInfo(el.dataset.k);break;
+    case 'clockinfo':UI.clockK=el.dataset.k;openClockInfo(el.dataset.k);break;
     /* quick add */
     case 'qaClose':closeQuick();break;
+    case 'clockSetDur':if(R){const v=Number($('#cd-'+id).value);if(!(v>0)){toast('Önce dakika yaz');break}R.dur=v;delete R.noDeduct;persist('r',id);render();openClockInfo(UI.clockK||'gun');toast('Süre eklendi')}break;
+    case 'clockDeductOn':if(R){delete R.noDeduct;R.deduct=true;persist('r',id);render();openClockInfo(UI.clockK||'gun')}break;
     case 'openLeft':openLeft();break;
     case 'closeLeft':closeLeft();break;
     case 'lpToLeft':{const k=el.dataset.k;S.settings.leftTabs=[...new Set([...leftTabs(),k])];persist('s');closeSheet();render();toast('Sol menüye taşındı · ☰ ile açılır');break}
